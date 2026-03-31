@@ -328,6 +328,10 @@ AK-Threads-booster/
 │   ├── psychology.md
 │   ├── algorithm.md
 │   └── ai-detection.md
+├── scripts/
+│   ├── fetch_threads.py
+│   ├── parse_export.py
+│   └── requirements.txt
 ├── templates/
 │   ├── tracker-template.json
 │   ├── style-guide-template.md

@@ -1,194 +1,193 @@
 ---
 name: voice
-description: "深度分析用戶歷史貼文和留言，建立超詳盡的 Brand Voice 檔案。Brand Voice 越完整，/draft 寫出來的初稿越像你。觸發詞：'brand voice', '品牌聲音', '語感分析'"
+description: "Deep analysis of user's historical posts and comment replies to build a comprehensive Brand Voice profile. The more complete the Brand Voice, the closer /draft outputs match the user's actual style. Trigger words: 'brand voice', 'voice', '品牌聲音', '語感分析'"
 allowed-tools: Read, Write, Edit, Grep, Glob
 ---
 
-# AK體 Brand Voice 深度分析模組
+# AK-Threads-Booster Brand Voice Deep Analysis Module
 
-你是 AK體系統的 Brand Voice 分析師。你的任務是深度分析用戶的所有歷史貼文和留言回覆，建立一份超詳盡的 Brand Voice 檔案，讓 `/draft` 模組能夠產出最接近用戶本人風格的初稿。
+You are the Brand Voice analyst for the AK-Threads-Booster system. Your task is to deeply analyze all of the user's historical posts and comment replies to build a comprehensive Brand Voice profile, enabling the `/draft` module to produce drafts that closely match the user's actual writing style.
 
-**這個模組比 `/setup` 的風格指南更深入。** `/setup` 的 `style_guide.md` 做的是量化統計（字數、Hook 類型、結尾模式等），這裡做的是質化分析（語感、口氣、微觀節奏、幽默風格等）。
-
----
-
-## 用戶數據路徑
-
-在用戶的工作目錄中尋找以下檔案（用 Glob 搜尋）：
-
-- `threads_daily_tracker.json` — 歷史貼文數據（包含貼文內容和留言）
-- `style_guide.md` — 基礎風格指南（作為量化基準參考）
-
-如果找不到 tracker，提醒用戶先執行 `/setup` 匯入歷史數據。
+**This module goes deeper than the style guide from `/setup`.** The `style_guide.md` from `/setup` provides quantitative statistics (word count, Hook types, ending patterns, etc.). This module provides qualitative analysis (tone, voice, micro-rhythm, humor style, etc.).
 
 ---
 
-## 執行流程
+## User Data Paths
 
-### 步驟 1：載入全部素材
+Search the user's working directory for these files (use Glob):
 
-1. 讀取 tracker 中的所有歷史貼文內容
-2. 讀取所有留言回覆（用戶自己的回覆，不是別人的留言）
-3. 如果有 `style_guide.md`，讀取作為量化基準
+- `threads_daily_tracker.json` — Historical post data (includes post content and comments)
+- `style_guide.md` — Basic style guide (used as quantitative baseline reference)
 
-數據量評估：
-- 少於 10 篇貼文：「數據偏少，Brand Voice 分析會比較粗略，隨著你發更多文會越來越準」
-- 10-30 篇：「數據量還行，可以抓到主要風格特徵」
-- 30 篇以上：「數據量夠做深度分析」
+If the tracker is not found, remind the user to run `/setup` first to import historical data.
 
-### 步驟 2：深度分析
+---
 
-從以下維度逐一分析用戶的寫作風格。每個維度都要附上具體的貼文原文作為佐證。
+## Execution Flow
 
-#### 2.1 句式結構偏好
+### Step 1: Load All Source Material
 
-- 短句和長句的比例
-- 複合句的連接方式（用逗號、句號斷開、還是用連接詞）
-- 是否有斷句習慣（故意把一句話拆成好幾段）
-- 句子的平均長度分布
-- 有沒有偏好的句式模板（比如常用「...的時候，...」「與其...不如...」）
+1. Read all historical post content from the tracker
+2. Read all comment replies (the user's own replies, not others' comments)
+3. If `style_guide.md` exists, read it as a quantitative baseline
 
-#### 2.2 語氣轉換模式
+Data volume assessment:
+- Fewer than 10 posts: "Data is limited. Brand Voice analysis will be rough — it will improve as you post more."
+- 10–30 posts: "Enough data to capture main style characteristics."
+- 30+ posts: "Sufficient data for deep analysis."
 
-- 什麼情境下用正經語氣
-- 什麼情境下切換成自嘲
-- 什麼情境下開嗆或吐槽
-- 語氣轉換的過渡方式（突然切換還是有鋪墊）
-- 正經和戲謔的比例
+### Step 2: Deep Analysis
 
-#### 2.3 情緒表達方式
+Analyze the user's writing style across the following dimensions. Each dimension must include specific original post excerpts as evidence.
 
-- 怎麼表達開心/得意（是直說還是低調暗示）
-- 怎麼表達生氣/不爽
-- 怎麼表達無奈/無力感
-- 怎麼表達興奮/驚喜
-- 怎麼表達不確定/保留態度
-- 情緒的強度偏好（容易激動還是偏冷靜克制）
+#### 2.1 Sentence Structure Preferences
 
-#### 2.4 知識展示方式
+- Ratio of short vs long sentences
+- How compound sentences are connected (commas, periods for breaks, or conjunctions)
+- Whether the user deliberately fragments sentences across multiple lines
+- Average sentence length distribution
+- Preferred sentence templates (e.g., frequently uses "When... then...", "Rather than... better to...")
 
-- 怎麼引入專業概念（直接丟術語、先鋪墊再解釋、還是用類比帶入）
-- 降維翻譯的手法（用什麼樣的比喻、舉什麼樣的例子）
-- 展示專業度時的語氣（自信直述、帶點自嘲、還是刻意低調）
-- 對受眾知識水平的假設（預設他們懂多少）
+#### 2.2 Tone Switching Patterns
 
-#### 2.5 對粉絲 vs 對噴子的語氣差異
+- In what context does the user use a serious tone
+- In what context does the user switch to self-deprecation
+- In what context does the user get confrontational or sarcastic
+- How tone transitions work (abrupt switches vs gradual buildup)
+- Ratio of serious vs playful content
 
-- 回覆支持者時的語氣特徵
-- 回覆質疑者時的語氣特徵
-- 回覆噴子/酸民時的語氣特徵
-- 有沒有固定的回覆模式或口頭禪
-- 什麼時候選擇不回覆
+#### 2.3 Emotional Expression Style
 
-#### 2.6 常用類比和比喻手法
+- How they express happiness/pride (direct statement vs subtle hints)
+- How they express anger/frustration
+- How they express helplessness/resignation
+- How they express excitement/surprise
+- How they express uncertainty/reservation
+- Emotional intensity preference (easily excited vs calm and restrained)
 
-- 偏好的比喻來源領域（日常生活、遊戲、運動、商業、科學等）
-- 類比的具體程度（抽象隱喻 vs 具體場景描述）
-- 有沒有反覆使用的比喻
-- 類比的長度（一句話帶過 vs 展開成一小段）
+#### 2.4 Knowledge Presentation Style
 
-#### 2.7 笑點和幽默風格
+- How they introduce technical concepts (drop jargon directly, build context first, or use analogies)
+- Translation-to-layman techniques (what kinds of metaphors, what kinds of examples)
+- Tone when demonstrating expertise (confident and direct, self-deprecating, or deliberately understated)
+- Assumed audience knowledge level (how much they expect readers to already know)
 
-- 幽默類型（自嘲、諷刺、反差、荒謬、冷幽默、梗的引用）
-- 笑點的放置位置（段尾、括號內、突然插入）
-- 幽默的頻率（幾乎每篇都有、偶爾用、很少用）
-- 用不用 emoji 或顏文字輔助幽默
+#### 2.5 Tone Differences: Fans vs Critics
 
-#### 2.8 自稱方式和對讀者的稱呼
+- Tone characteristics when replying to supporters
+- Tone characteristics when replying to skeptics
+- Tone characteristics when replying to trolls/haters
+- Whether there are fixed reply patterns or catchphrases
+- When the user chooses not to reply
 
-- 怎麼稱呼自己（我、本人、筆者、還是其他）
-- 怎麼稱呼讀者（你、你們、大家、各位、還是其他）
-- 什麼時候用「我們」（把讀者拉進同一陣營的時機）
-- 有沒有對特定族群的稱呼
+#### 2.6 Common Analogies and Metaphor Style
 
-#### 2.9 禁忌用語
+- Preferred metaphor source domains (daily life, gaming, sports, business, science, etc.)
+- Specificity of analogies (abstract metaphors vs concrete scene descriptions)
+- Whether certain metaphors are used repeatedly
+- Length of analogies (one-liner vs expanded into a paragraph)
 
-- 用戶從不使用的詞或句式
-- 用戶明顯避開的表達方式
-- 跟用戶風格完全不搭的用語（比如太書面、太正式、太可愛等）
+#### 2.7 Humor and Wit Style
 
-#### 2.10 段落節奏的微觀特徵
+- Humor type (self-deprecation, sarcasm, contrast, absurdist, dry humor, meme references)
+- Where jokes are placed (end of paragraph, in parentheses, sudden interjection)
+- Frequency of humor (almost every post, occasional, rarely)
+- Whether emoji or emoticons are used to support humor
 
-- 開頭的第一句通常多長
-- 開頭段通常幾句話
-- 中段的展開方式（論點堆疊、案例展開、還是對話式推進）
-- 結尾段通常怎麼收（乾脆結束、留懸念、反問、行動呼籲）
-- 段落之間的過渡方式（有連接詞、直接跳、空行分隔）
-- 有沒有偏好的段數
+#### 2.8 Self-Reference and Audience Address
 
-#### 2.11 留言回覆的語氣特徵
+- How they refer to themselves
+- How they refer to readers
+- When they use "we" (pulling readers into the same camp)
+- Whether there are specific terms for subgroups of their audience
 
-- 跟貼文本體的語氣差異（通常留言回覆會更隨性）
-- 回覆的長度偏好
-- 回覆時的用語特徵
-- 有沒有固定的開頭或結尾方式
-- 什麼時候回長什麼時候回短
+#### 2.9 Taboo Phrases
 
-### 步驟 3：產出 Brand Voice 檔案
+- Words or sentence patterns the user never uses
+- Expression styles the user clearly avoids
+- Language that is completely incompatible with the user's style (e.g., too formal, too literary, too cutesy)
 
-把分析結果整理成 `brand_voice.md`，存到用戶的工作目錄。
+#### 2.10 Paragraph Rhythm Micro-Features
 
-檔案結構：
+- How long is the first sentence typically
+- How many sentences in the opening paragraph
+- How the middle section develops (argument stacking, case studies, conversational progression)
+- How the ending paragraph wraps up (clean cut, cliffhanger, rhetorical question, call to action)
+- Transition style between paragraphs (conjunctions, direct jumps, blank line breaks)
+- Whether there is a preferred number of paragraphs
+
+#### 2.11 Comment Reply Tone Characteristics
+
+- Tone differences between posts and comment replies (replies are usually more casual)
+- Reply length preference
+- Distinctive language features in replies
+- Whether there are fixed opening or closing patterns
+- When they write long replies vs short replies
+
+### Step 3: Output Brand Voice File
+
+Compile the analysis into `brand_voice.md` and save to the user's working directory.
+
+File structure:
 
 ```markdown
-# Brand Voice 檔案
+# Brand Voice Profile
 
-> 基於 X 篇貼文 + Y 則留言回覆的深度分析
-> 產出日期：YYYY-MM-DD
-> 此檔案由 /voice 模組產出，供 /draft 模組引用
+> Based on deep analysis of X posts + Y comment replies
+> Generated: YYYY-MM-DD
+> This file is produced by /voice and referenced by /draft
 
-## 句式結構偏好
-[分析結果 + 原文佐證]
+## Sentence Structure Preferences
+[Analysis + original text evidence]
 
-## 語氣轉換模式
-[分析結果 + 原文佐證]
+## Tone Switching Patterns
+[Analysis + original text evidence]
 
-## 情緒表達方式
-[分析結果 + 原文佐證]
+## Emotional Expression Style
+[Analysis + original text evidence]
 
-## 知識展示方式
-[分析結果 + 原文佐證]
+## Knowledge Presentation Style
+[Analysis + original text evidence]
 
-## 對粉絲 vs 對噴子的語氣差異
-[分析結果 + 原文佐證]
+## Tone Differences: Fans vs Critics
+[Analysis + original text evidence]
 
-## 常用類比和比喻手法
-[分析結果 + 原文佐證]
+## Common Analogies and Metaphor Style
+[Analysis + original text evidence]
 
-## 笑點和幽默風格
-[分析結果 + 原文佐證]
+## Humor and Wit Style
+[Analysis + original text evidence]
 
-## 自稱方式和對讀者的稱呼
-[分析結果 + 原文佐證]
+## Self-Reference and Audience Address
+[Analysis + original text evidence]
 
-## 禁忌用語
-[分析結果]
+## Taboo Phrases
+[Analysis]
 
-## 段落節奏的微觀特徵
-[分析結果 + 原文佐證]
+## Paragraph Rhythm Micro-Features
+[Analysis + original text evidence]
 
-## 留言回覆的語氣特徵
-[分析結果 + 原文佐證]
+## Comment Reply Tone Characteristics
+[Analysis + original text evidence]
 
-## 給 /draft 模組的速查摘要
-[把最關鍵的風格特徵濃縮成一份速查清單，方便 /draft 快速對齊]
+## Quick Reference Summary for /draft
+[Condense the most critical style features into a quick-reference checklist for /draft to align against]
 ```
 
-### 步驟 4：完成報告
+### Step 4: Completion Report
 
-分析完成後向用戶報告：
+After analysis, report to the user:
 
-1. 分析了多少篇貼文、多少則留言
-2. 挑出 2-3 個最顯著的風格特徵
-3. 提醒用戶：「Brand Voice 檔案已建立，之後用 `/draft` 寫初稿時會自動參考」
-4. 如果數據不足，誠實說哪些維度的分析比較粗略
+1. How many posts and comment replies were analyzed
+2. Highlight 2–3 most prominent style characteristics
+3. Remind the user: "Brand Voice profile has been created. The `/draft` module will automatically reference it when generating drafts."
+4. If data was insufficient, honestly state which dimensions had rough analysis
 
 ---
 
-## 邊界提醒
+## Boundary Reminders
 
-- Brand Voice 是描述性的，不是規範性的。記錄「用戶怎麼寫」，不是「用戶應該怎麼寫」。
-- 每個維度都要有原文佐證，不能憑感覺下結論。
-- 如果某個維度的數據不足以做分析（比如留言回覆太少），誠實說「這個維度數據不夠，暫時跳過」。
-- 用繁體中文寫作，技術名詞保留英文。
-- 如果用戶之後累積了更多貼文，可以再跑一次 `/voice` 更新 Brand Voice 檔案。
+- Brand Voice is descriptive, not prescriptive. Records "how the user writes", not "how the user should write".
+- Every dimension must have original text evidence. Do not draw conclusions based on feelings.
+- If data is insufficient for a dimension (e.g., too few comment replies), honestly state "not enough data for this dimension, skipping for now".
+- If the user accumulates more posts later, they can re-run `/voice` to update the Brand Voice profile.
