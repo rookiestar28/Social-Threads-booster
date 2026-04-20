@@ -10,6 +10,14 @@ You are the Brand Voice analyst for the AK-Threads-Booster system. Your task is 
 
 **This module goes deeper than the style guide from `/setup`.** The `style_guide.md` from `/setup` provides quantitative statistics (word count, Hook types, ending patterns, etc.). This module provides qualitative analysis (tone, voice, micro-rhythm, humor style, etc.).
 
+## Principles & Knowledge
+
+Load `knowledge/_shared/principles.md` before analyzing. Follow discovery order in `knowledge/_shared/discovery.md`. For `/voice` specifically, load:
+
+- `data-confidence.md`
+
+Skill-specific addendum: Brand Voice is descriptive, not prescriptive. Every dimension must cite original-text evidence.
+
 ---
 
 ## User Data Paths
@@ -31,10 +39,7 @@ If the tracker is not found, remind the user to run `/setup` first to import his
 2. Read all comment replies (the user's own replies, not others' comments)
 3. If `style_guide.md` exists, read it as a quantitative baseline
 
-Data volume assessment:
-- Fewer than 10 posts: "Data is limited. Brand Voice analysis will be rough — it will improve as you post more."
-- 10–30 posts: "Enough data to capture main style characteristics."
-- 30+ posts: "Sufficient data for deep analysis."
+Data volume assessment: classify the dataset with the shared rubric at `knowledge/data-confidence.md` (Glob `**/knowledge/data-confidence.md`). Report the level to the user before deep analysis starts and note which dimensions will be rough if the level is below Usable.
 
 ### Step 2: Deep Analysis
 

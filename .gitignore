@@ -10,9 +10,9 @@ style_guide.md
 brand_voice.md
 concept_library.md
 
-# User's topic bank and idea files
-idea/
-topics/
+# User's topic bank and idea files (anchored to repo root — do NOT match skills/topics/)
+/idea/
+/topics/
 
 # Python
 __pycache__/
