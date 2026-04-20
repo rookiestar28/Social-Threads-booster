@@ -27,8 +27,8 @@ Each sub-skill is located via `Glob **/skills/<name>/SKILL.md` so resolution wor
 
 - Setup / import / initialize / backfill history -> Glob `**/skills/setup/SKILL.md`
 - Refresh tracker / update metrics / scrape own profile -> Glob `**/skills/refresh/SKILL.md`
-- Analyze a finished post / inspect / AK-review a draft -> Glob `**/skills/analyze/SKILL.md`
-- Draft / write / 起草 / 寫文 -> Glob `**/skills/draft/SKILL.md`
+- Analyze a finished post / inspect / AK-review / optimize / improve / 檢查 / 優化 / 診斷 a post the user has written -> Glob `**/skills/analyze/SKILL.md`
+- Draft / write from a topic / 起草 / 寫文 (user has **not** written anything yet; generate from a topic) -> Glob `**/skills/draft/SKILL.md`
 - Predict likely 24-hour performance / expectation check -> Glob `**/skills/predict/SKILL.md`
 - Review actual post performance / compare against prediction -> Glob `**/skills/review/SKILL.md`
 - Mine next topics / topic suggestions / 選題 -> Glob `**/skills/topics/SKILL.md`
@@ -45,6 +45,8 @@ Each sub-skill is located via `Glob **/skills/<name>/SKILL.md` so resolution wor
    - post-publication learning flow -> review
 4. Keep outputs grounded in the user's own tracker whenever available.
 5. If `threads_daily_tracker.json` is missing, do not pretend the work is data-backed. Ask for fallback history or use the setup path.
+6. **Analyze vs Draft routing discipline.** If the user pastes their own text — no matter whether they say "analyze", "check", "optimize", "improve", "幫我看一下", "幫我優化" — route to `/analyze`. `/analyze` gives pointed diagnosis and preserves the user's format; it does **not** rewrite the post. Route to `/draft` only when the user has no existing text and wants something generated from a topic.
+7. **Brand voice scope.** `brand_voice.md` is a composition driver **only** in `/draft`. Every other module treats it as observation-only — for flagging drift, never for rewriting the user's submission toward a voice template.
 
 ## Working Data
 

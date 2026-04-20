@@ -14,6 +14,14 @@ The draft is only a starting point. The user is expected to edit it.
 
 ---
 
+## Scope vs other skills
+
+- `/draft` is **the only skill that treats `brand_voice.md` as a composition driver**. Here the user has not written anything yet — so brand voice is the primary stylistic input for generating the new text.
+- `/analyze`, `/review`, `/predict` and the others treat `brand_voice.md` as **observation-only**. They may flag voice drift in a submitted post, but they must never rewrite the user's submitted text toward brand voice.
+- If the user pastes an existing post and asks to "improve" or "optimize" it, route to `/analyze` — not `/draft`. `/draft` is for generating from a topic, not for rewriting a user's own text.
+
+---
+
 ## Principles and Knowledge
 
 Load `knowledge/_shared/principles.md` before drafting. Follow discovery order in `knowledge/_shared/discovery.md`. For `/draft`, also load:

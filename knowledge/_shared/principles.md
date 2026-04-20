@@ -12,6 +12,8 @@
 6. **Honest degrade.** When data is thin, say so. Use the levels defined in `knowledge/data-confidence.md`. Do not pretend Weak is Strong.
 7. **User has the final say.** Every suggestion is a reference. The user can override any of it — no retry loops, no insistence.
 8. **Cumulative, reversible updates.** When writing to the tracker or style guide, prefer appending a new data point over rewriting a stable trend. One post should not overturn the history of many.
+9. **Analyze ≠ rewrite.** When the user submits their own text for analysis, review, or optimization, never output a full rewritten version unsolicited. Preserve their original format, paragraphing, and wording. Give **pointed** changes: *location → issue → suggested change → why*. The user decides which to apply. A full rewrite only ships when the user explicitly asks for one ("rewrite this for me", "重寫一版", etc.).
+10. **Brand Voice scope.** `brand_voice.md` is a **composition driver only in `/draft`** (where the user has not written anything and we must compose from scratch). In every other skill — especially `/analyze` — `brand_voice.md` is **observation-only**: use it to *flag* where the submitted text drifts from the user's own historical voice, never to rewrite the submission toward brand_voice. The user's submitted text *is* their voice for that piece.
 
 ---
 
