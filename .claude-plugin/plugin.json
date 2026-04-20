@@ -1,5 +1,5 @@
 {
-  "name": "AK-Threads-booster",
+  "name": "ak-threads-booster",
   "description": "AK體：數據驅動的社交媒體寫文顧問系統。基於歷史數據、社交媒體心理學、Meta演算法機制，為你的 Threads 帳號提供個人化的寫文分析與建議。",
   "version": "1.0.0",
   "author": {
@@ -7,9 +7,6 @@
     "url": "https://threads.net/@darkseoking"
   },
   "homepage": "https://github.com/akseolabs-seo/AK-Threads-booster",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/akseolabs-seo/AK-Threads-booster"
-  },
+  "repository": "https://github.com/akseolabs-seo/AK-Threads-booster",
   "license": "MIT"
 }
