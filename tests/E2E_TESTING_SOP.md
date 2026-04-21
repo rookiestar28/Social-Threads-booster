@@ -167,6 +167,24 @@ Expected result:
 - `.tmp\threads_refresh.log` is created
 - the appended JSON line contains `ok: false` and a machine-readable `reason`
 
+### 9. Freshness audit logging
+
+```powershell
+python scripts/log_freshness_audit.py `
+  --skill draft `
+  --target seo-recovery-playbook `
+  --status skipped_by_user `
+  --outcome yellow `
+  --web-search-query "seo recovery playbook 2026" `
+  --log-file .tmp\threads_freshness.log
+```
+
+Expected result:
+
+- exit code `0`
+- `.tmp\threads_freshness.log` is created
+- the appended JSON line contains `skill: draft` plus `status`, `decision`, and `run_id`
+
 ## Linux / WSL Verified Flow
 
 ### 0. Prepare workspace-local temp output
@@ -241,6 +259,18 @@ python scripts/update_snapshots.py \
   --tracker examples/tracker-example.json \
   --headless \
   --log-file .tmp/threads_refresh.log
+```
+
+### 9. Freshness audit logging
+
+```bash
+python scripts/log_freshness_audit.py \
+  --skill draft \
+  --target seo-recovery-playbook \
+  --status skipped_by_user \
+  --outcome yellow \
+  --web-search-query "seo recovery playbook 2026" \
+  --log-file .tmp/threads_freshness.log
 ```
 
 ## Verification Notes

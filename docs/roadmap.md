@@ -31,7 +31,7 @@
 | AKR-005 | Shared artifact generation pipeline for `/setup` | done | P0 | setup / orchestration | AKR-002, AKR-003, AKR-004 |
 | AKR-006 | Shared tracker IO, backup, and mutation utilities | done | P0 | scripts / data integrity | - |
 | AKR-007 | Enforce `/refresh` headless log contract in executable code | done | P0 | refresh / auditability | AKR-006 |
-| AKR-008 | Enforce freshness audit log contract for `/topics` and `/draft` | backlog | P0 | topics / draft / auditability | AKR-006 |
+| AKR-008 | Enforce freshness audit log contract for `/topics` and `/draft` | done | P0 | topics / draft / auditability | AKR-006 |
 | AKR-009 | Implement `/review` log-health checks and degraded-mode analysis helpers | backlog | P0 | review / auditability | AKR-007, AKR-008 |
 
 ## Next
@@ -161,7 +161,7 @@
 
 ### AKR-008 - Enforce freshness audit log contract for `/topics` and `/draft`
 
-- Status: `backlog`
+- Status: `done`
 - Priority: `P0`
 - Problem:
   `/topics` and `/draft` require JSON-line freshness audit records, but this behavior is currently specified only in markdown.
@@ -171,6 +171,7 @@
   `run_id`, topic/candidate slug, performed/unavailable/skipped states, verdict/decision fields, and timestamp consistency.
 - Acceptance notes:
   Code paths used by topic/draft automation can append valid `threads_freshness.log` entries without duplicating formatting logic.
+  Implemented by `scripts/freshness_logging.py` and `scripts/log_freshness_audit.py`, with regression coverage in `tests/test_freshness_logging.py`.
 
 ### AKR-009 - Implement `/review` log-health checks and degraded-mode analysis helpers
 
