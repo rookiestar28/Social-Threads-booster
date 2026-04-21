@@ -27,7 +27,7 @@
 | AKR-017 | Align testing SOP and AGENTS rules with repo reality | done | P0 | docs / governance | - |
 | AKR-002 | Programmatic `style_guide.md` generation | done | P0 | setup / analysis | - |
 | AKR-003 | Programmatic `concept_library.md` generation | done | P0 | setup / analysis | AKR-002 |
-| AKR-004 | Programmatic `brand_voice.md` generation | backlog | P0 | voice / drafting | AKR-002 |
+| AKR-004 | Programmatic `brand_voice.md` generation | done | P0 | voice / drafting | AKR-002 |
 | AKR-005 | Shared artifact generation pipeline for `/setup` | backlog | P0 | setup / orchestration | AKR-002, AKR-003, AKR-004 |
 | AKR-006 | Shared tracker IO, backup, and mutation utilities | backlog | P0 | scripts / data integrity | - |
 | AKR-007 | Enforce `/refresh` headless log contract in executable code | backlog | P0 | refresh / auditability | AKR-006 |
@@ -105,7 +105,7 @@
 
 ### AKR-004 - Programmatic `brand_voice.md` generation
 
-- Status: `backlog`
+- Status: `done`
 - Priority: `P0`
 - Problem:
   `/voice` relies on a rich qualitative profile, but there is no executable pipeline for generating `brand_voice.md`.
@@ -115,6 +115,7 @@
   Evidence-backed section generation and graceful degradation when reply data is limited.
 - Acceptance notes:
   The generator emits a markdown profile aligned to the example/template structure and cites source snippets or counts per section.
+  Implemented by `scripts/generate_brand_voice.py` with regression coverage in `tests/test_generate_brand_voice.py`.
 
 ### AKR-005 - Shared artifact generation pipeline for `/setup`
 

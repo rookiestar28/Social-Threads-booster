@@ -30,6 +30,7 @@ The `scripts/` directory is a sibling of `skills/`. Use Glob to locate the scrip
 - Glob `**/scripts/parse_export.py` — Parse Meta account data export
 - Glob `**/scripts/generate_style_guide.py` — Generate `style_guide.md` from tracker data
 - Glob `**/scripts/generate_concept_library.py` — Generate `concept_library.md` from tracker data
+- Glob `**/scripts/generate_brand_voice.py` — Generate `brand_voice.md` from tracker data when voice profiling is requested
 
 These scripts require Python 3.9+ and the `requests` package for the API path.
 
