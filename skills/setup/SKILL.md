@@ -29,6 +29,7 @@ The `scripts/` directory is a sibling of `skills/`. Use Glob to locate the scrip
 - Glob `**/scripts/fetch_threads.py` — Fetch posts via Meta Threads API
 - Glob `**/scripts/parse_export.py` — Parse Meta account data export
 - Glob `**/scripts/generate_style_guide.py` — Generate `style_guide.md` from tracker data
+- Glob `**/scripts/generate_concept_library.py` — Generate `concept_library.md` from tracker data
 
 These scripts require Python 3.9+ and the `requests` package for the API path.
 
@@ -456,6 +457,8 @@ Auto-extract into `concept_library.md`:
 4. Concepts that were only lightly explained and may need deeper treatment later
 
 Template reference: locate with Glob `**/templates/concept-library-template.md`
+
+Preferred execution path: shell out to `scripts/generate_concept_library.py` when available. Fall back to manual generation only if the script is missing or unavailable in the current environment.
 
 ---
 
