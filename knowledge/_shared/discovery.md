@@ -48,6 +48,8 @@ Scripts live at `**/scripts/`:
 - `refresh_logging.py` — shared JSON-line writer for `threads_refresh.log`
 - `freshness_logging.py` — shared JSON-line writer for `threads_freshness.log`
 - `log_freshness_audit.py` — thin CLI for appending one freshness audit entry for `topics` or `draft`
+- `review_log_health.py` — shared parsers and summarizers for refresh/freshness log health
+- `summarize_log_health.py` — thin CLI for emitting machine-readable review log-health summaries
 - `tracker_utils.py` — shared tracker IO, backup rotation, scaffold defaults, and post hydration helpers
 - `update_snapshots.py` — periodic metrics refresh (API)
 - `update_topic_freshness.py` — semantic cluster + freshness scoring

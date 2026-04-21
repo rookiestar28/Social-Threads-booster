@@ -32,7 +32,7 @@
 | AKR-006 | Shared tracker IO, backup, and mutation utilities | done | P0 | scripts / data integrity | - |
 | AKR-007 | Enforce `/refresh` headless log contract in executable code | done | P0 | refresh / auditability | AKR-006 |
 | AKR-008 | Enforce freshness audit log contract for `/topics` and `/draft` | done | P0 | topics / draft / auditability | AKR-006 |
-| AKR-009 | Implement `/review` log-health checks and degraded-mode analysis helpers | backlog | P0 | review / auditability | AKR-007, AKR-008 |
+| AKR-009 | Implement `/review` log-health checks and degraded-mode analysis helpers | done | P0 | review / auditability | AKR-007, AKR-008 |
 
 ## Next
 
@@ -175,7 +175,7 @@
 
 ### AKR-009 - Implement `/review` log-health checks and degraded-mode analysis helpers
 
-- Status: `backlog`
+- Status: `done`
 - Priority: `P0`
 - Problem:
   `/review` specifies health analysis over `threads_freshness.log` and `threads_refresh.log`, but there is no local parser/helper layer to support that logic.
@@ -185,6 +185,7 @@
   Grouping by `run_id`, fallback grouping rules, recent-window summaries, and review-facing text helpers.
 - Acceptance notes:
   A local helper can load the logs and return structured summaries that match the review spec's required checks.
+  Implemented by `scripts/review_log_health.py` and `scripts/summarize_log_health.py`, with regression coverage in `tests/test_review_log_health.py`.
 
 ### AKR-010 - Legacy tracker migration and markdown enrichment automation
 

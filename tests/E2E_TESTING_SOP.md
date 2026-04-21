@@ -185,6 +185,23 @@ Expected result:
 - `.tmp\threads_freshness.log` is created
 - the appended JSON line contains `skill: draft` plus `status`, `decision`, and `run_id`
 
+### 10. Review log-health summary
+
+Create synthetic `threads_refresh.log` and `threads_freshness.log` fixtures in `.tmp\review-log-health\`, then run:
+
+```powershell
+python scripts/summarize_log_health.py `
+  --refresh-log .tmp\review-log-health\threads_refresh.log `
+  --freshness-log .tmp\review-log-health\threads_freshness.log `
+  --current-topic-slug seo-recovery-playbook
+```
+
+Expected result:
+
+- exit code `0`
+- stdout is valid JSON
+- payload includes both `refresh` and `freshness` summaries
+
 ## Linux / WSL Verified Flow
 
 ### 0. Prepare workspace-local temp output
@@ -271,6 +288,17 @@ python scripts/log_freshness_audit.py \
   --outcome yellow \
   --web-search-query "seo recovery playbook 2026" \
   --log-file .tmp/threads_freshness.log
+```
+
+### 10. Review log-health summary
+
+Create synthetic `threads_refresh.log` and `threads_freshness.log` fixtures in `.tmp/review-log-health/`, then run:
+
+```bash
+python scripts/summarize_log_health.py \
+  --refresh-log .tmp/review-log-health/threads_refresh.log \
+  --freshness-log .tmp/review-log-health/threads_freshness.log \
+  --current-topic-slug seo-recovery-playbook
 ```
 
 ## Verification Notes
