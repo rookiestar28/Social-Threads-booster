@@ -31,6 +31,7 @@ The `scripts/` directory is a sibling of `skills/`. Use Glob to locate the scrip
 - Glob `**/scripts/generate_style_guide.py` — Generate `style_guide.md` from tracker data
 - Glob `**/scripts/generate_concept_library.py` — Generate `concept_library.md` from tracker data
 - Glob `**/scripts/generate_brand_voice.py` — Generate `brand_voice.md` from tracker data when voice profiling is requested
+- Glob `**/scripts/run_setup_artifacts.py` — Generate the full setup artifact bundle from one command after the tracker exists
 
 These scripts require Python 3.9+ and the `requests` package for the API path.
 
@@ -418,6 +419,8 @@ After import, read the file, verify it is structurally valid, and report the num
 
 Read all historical posts from the tracker and generate `style_guide.md`.
 
+Preferred execution path for Steps 3, 4, and 4.5 together: shell out to `scripts/run_setup_artifacts.py` when available, because it produces the setup artifact bundle in one deterministic pass.
+
 Preferred execution path: shell out to `scripts/generate_style_guide.py` when available. Fall back to manual generation only if the script is missing or unavailable in the current environment.
 
 Analyze:
@@ -460,6 +463,16 @@ Auto-extract into `concept_library.md`:
 Template reference: locate with Glob `**/templates/concept-library-template.md`
 
 Preferred execution path: shell out to `scripts/generate_concept_library.py` when available. Fall back to manual generation only if the script is missing or unavailable in the current environment.
+
+If `scripts/run_setup_artifacts.py` is available, prefer that combined command over invoking Steps 3, 4, and 4.5 one by one:
+
+```bash
+python scripts/run_setup_artifacts.py \
+  --tracker "<user-working-dir>/threads_daily_tracker.json" \
+  --output-dir "<user-working-dir>"
+```
+
+Add `--include-brand-voice` when the user explicitly wants the `/voice` profile generated during setup.
 
 ---
 

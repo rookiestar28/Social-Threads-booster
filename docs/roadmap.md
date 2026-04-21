@@ -28,7 +28,7 @@
 | AKR-002 | Programmatic `style_guide.md` generation | done | P0 | setup / analysis | - |
 | AKR-003 | Programmatic `concept_library.md` generation | done | P0 | setup / analysis | AKR-002 |
 | AKR-004 | Programmatic `brand_voice.md` generation | done | P0 | voice / drafting | AKR-002 |
-| AKR-005 | Shared artifact generation pipeline for `/setup` | backlog | P0 | setup / orchestration | AKR-002, AKR-003, AKR-004 |
+| AKR-005 | Shared artifact generation pipeline for `/setup` | done | P0 | setup / orchestration | AKR-002, AKR-003, AKR-004 |
 | AKR-006 | Shared tracker IO, backup, and mutation utilities | backlog | P0 | scripts / data integrity | - |
 | AKR-007 | Enforce `/refresh` headless log contract in executable code | backlog | P0 | refresh / auditability | AKR-006 |
 | AKR-008 | Enforce freshness audit log contract for `/topics` and `/draft` | backlog | P0 | topics / draft / auditability | AKR-006 |
@@ -119,7 +119,7 @@
 
 ### AKR-005 - Shared artifact generation pipeline for `/setup`
 
-- Status: `backlog`
+- Status: `done`
 - Priority: `P0`
 - Problem:
   `/setup` currently depends on the agent stitching together multiple outputs manually instead of invoking a stable local pipeline.
@@ -129,6 +129,7 @@
   Consistent file ordering, overwrite behavior, backup behavior, and summary output.
 - Acceptance notes:
   A single command or module can produce all setup artifacts in a predictable order from a tracker input.
+  Implemented by `scripts/run_setup_artifacts.py` with regression coverage in `tests/test_run_setup_artifacts.py`.
 
 ### AKR-006 - Shared tracker IO, backup, and mutation utilities
 

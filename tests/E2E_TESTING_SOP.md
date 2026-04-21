@@ -19,6 +19,9 @@ Accordingly, E2E means:
 These should use fixture-based CLI E2E whenever they change:
 
 - `scripts/generate_style_guide.py`
+- `scripts/generate_concept_library.py`
+- `scripts/generate_brand_voice.py`
+- `scripts/run_setup_artifacts.py`
 - `scripts/render_companions.py`
 - `scripts/update_topic_freshness.py`
 - `scripts/parse_export.py` when a suitable local fixture exists
@@ -73,7 +76,52 @@ Expected result:
 - `.tmp\companions\posts_by_topic.md`
 - `.tmp\companions\comments.md`
 
-### 3. Topic freshness annotation
+### 3. Concept library generation
+
+```powershell
+python scripts/generate_concept_library.py `
+  --tracker examples\tracker-example.json `
+  --output .tmp\concept_library-e2e.md
+```
+
+Expected result:
+
+- exit code `0`
+- `.tmp\concept_library-e2e.md` created
+- output contains `# Concept Library`
+
+### 4. Brand voice generation
+
+```powershell
+python scripts/generate_brand_voice.py `
+  --tracker examples\tracker-example.json `
+  --output .tmp\brand_voice-e2e.md
+```
+
+Expected result:
+
+- exit code `0`
+- `.tmp\brand_voice-e2e.md` created
+- output contains `# Brand Voice Profile`
+
+### 5. Setup artifact pipeline
+
+```powershell
+python scripts/run_setup_artifacts.py `
+  --tracker examples\tracker-example.json `
+  --output-dir .tmp\setup-artifacts `
+  --include-brand-voice
+```
+
+Expected result:
+
+- exit code `0`
+- `.tmp\setup-artifacts\style_guide.md`
+- `.tmp\setup-artifacts\concept_library.md`
+- `.tmp\setup-artifacts\brand_voice.md`
+- companion markdown files created in the same output directory
+
+### 6. Topic freshness annotation
 
 Use a workspace-local copy because the script mutates the tracker.
 
@@ -113,7 +161,32 @@ python scripts/render_companions.py \
   --lang en
 ```
 
-### 3. Topic freshness annotation
+### 3. Concept library generation
+
+```bash
+python scripts/generate_concept_library.py \
+  --tracker examples/tracker-example.json \
+  --output .tmp/concept_library-e2e.md
+```
+
+### 4. Brand voice generation
+
+```bash
+python scripts/generate_brand_voice.py \
+  --tracker examples/tracker-example.json \
+  --output .tmp/brand_voice-e2e.md
+```
+
+### 5. Setup artifact pipeline
+
+```bash
+python scripts/run_setup_artifacts.py \
+  --tracker examples/tracker-example.json \
+  --output-dir .tmp/setup-artifacts \
+  --include-brand-voice
+```
+
+### 6. Topic freshness annotation
 
 ```bash
 cp examples/tracker-example.json .tmp/tracker-topic-freshness.json
