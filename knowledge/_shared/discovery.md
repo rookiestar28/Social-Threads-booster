@@ -41,6 +41,7 @@ Scripts live at `**/scripts/`:
 
 - `fetch_threads.py` — Meta API import
 - `parse_export.py` — Meta export import
+- `generate_style_guide.py` — deterministic `style_guide.md` generation from tracker data
 - `update_snapshots.py` — periodic metrics refresh (API)
 - `update_topic_freshness.py` — semantic cluster + freshness scoring
 

@@ -28,6 +28,7 @@ The `scripts/` directory is a sibling of `skills/`. Use Glob to locate the scrip
 
 - Glob `**/scripts/fetch_threads.py` — Fetch posts via Meta Threads API
 - Glob `**/scripts/parse_export.py` — Parse Meta account data export
+- Glob `**/scripts/generate_style_guide.py` — Generate `style_guide.md` from tracker data
 
 These scripts require Python 3.9+ and the `requests` package for the API path.
 
@@ -414,6 +415,8 @@ After import, read the file, verify it is structurally valid, and report the num
 ### Step 3: Auto-Generate Style Guide (M2)
 
 Read all historical posts from the tracker and generate `style_guide.md`.
+
+Preferred execution path: shell out to `scripts/generate_style_guide.py` when available. Fall back to manual generation only if the script is missing or unavailable in the current environment.
 
 Analyze:
 

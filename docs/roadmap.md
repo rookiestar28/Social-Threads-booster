@@ -25,7 +25,7 @@
 |---------|-------|--------|----------|------|------------|
 | AKR-001 | Establish roadmap and backlog governance | done | P0 | docs / planning | - |
 | AKR-017 | Align testing SOP and AGENTS rules with repo reality | done | P0 | docs / governance | - |
-| AKR-002 | Programmatic `style_guide.md` generation | backlog | P0 | setup / analysis | - |
+| AKR-002 | Programmatic `style_guide.md` generation | done | P0 | setup / analysis | - |
 | AKR-003 | Programmatic `concept_library.md` generation | backlog | P0 | setup / analysis | AKR-002 |
 | AKR-004 | Programmatic `brand_voice.md` generation | backlog | P0 | voice / drafting | AKR-002 |
 | AKR-005 | Shared artifact generation pipeline for `/setup` | backlog | P0 | setup / orchestration | AKR-002, AKR-003, AKR-004 |
@@ -66,7 +66,7 @@
 
 ### AKR-002 - Programmatic `style_guide.md` generation
 
-- Status: `backlog`
+- Status: `done`
 - Priority: `P0`
 - Problem:
   `/setup` specifies structured `style_guide.md` output, but the repository has no deterministic local generator for it.
@@ -75,7 +75,8 @@
 - Scope:
   Hook type summaries, word-count bands, ending patterns, content-type mix, emotional arc placeholders, signature phrases, confidence notes.
 - Acceptance notes:
-  Running the generator on sample tracker data should produce a stable markdown file matching the template shape and be safe to re-run.
+  Running the generator on sample tracker data produces a stable markdown file matching the template shape and can be re-run safely.
+  Implemented by `scripts/generate_style_guide.py` with regression coverage in `tests/test_generate_style_guide.py`.
 
 ### AKR-017 - Align testing SOP and AGENTS rules with repo reality
 
