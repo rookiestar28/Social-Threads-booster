@@ -1,39 +1,40 @@
-# ===========================================
-# AK-Threads-Booster .gitignore
-# Prevent users from accidentally committing
-# their personal data to the repository
-# ===========================================
-
-# User-generated data files (created by /setup)
-threads_daily_tracker.json
-style_guide.md
-brand_voice.md
-concept_library.md
-
-# User's topic bank and idea files (anchored to repo root — do NOT match skills/topics/)
-/idea/
-/topics/
-
-# Python
 __pycache__/
 *.py[cod]
-*.egg-info/
-venv/
+*.pyd
+.env
 .venv/
+.venv-wsl/
+venv/
 env/
-
-# OS files
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+output/
+docs/
+!docs/
+!docs/*.md
+.playwright-cli/
+.tox/
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.planning/
+reference/
+scripts/sync_split.py
+tests_output.txt
+node_modules/
+playwright-report/
+test-results/
+playwright/.cache/
+.tmp/
+*.log
+AGE*.md
+test_output.txt
+test_auth_out.txt
+connector_state.json*
 .DS_Store
-Thumbs.db
-desktop.ini
-
-# IDE
 .vscode/
 .idea/
-
-# Logs
-*.log
-
-# Environment variables / secrets
-.env
-.env.*
+*.swp
