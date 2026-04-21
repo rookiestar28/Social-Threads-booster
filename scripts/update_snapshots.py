@@ -22,25 +22,14 @@ in the process listing.
 """
 
 import argparse
-import json
 import os
-import shutil
 import sys
 import time
 from datetime import datetime, timezone
-from pathlib import Path
 
 try:
     from fetch_threads import (
         RATE_LIMIT_DELAY,
-        build_algorithm_signals,
-        build_metric_snapshot,
-        build_posting_time_slot,
-        build_psychology_signals,
-        build_review_state,
-        classify_content_type,
-        count_paragraphs,
-        count_words,
         exchange_long_lived_token,
         fetch_all_threads,
         fetch_thread_insights,
@@ -51,6 +40,17 @@ except ImportError as exc:
     print(f"Error: could not import helper functions from fetch_threads.py: {exc}")
     sys.exit(1)
 
+from tracker_utils import (
+    backup_tracker,
+    build_metric_snapshot,
+    build_post_record,
+    hydrate_post_defaults,
+    load_tracker,
+    save_tracker,
+    sort_posts_newest_first,
+    utc_now_iso,
+)
+
 CHECKPOINT_TARGETS = {
     "24h": 24.0,
     "72h": 72.0,
@@ -60,48 +60,7 @@ CHECKPOINT_TARGETS = {
 
 def ensure_extended_fields(post: dict) -> None:
     """Backfill newer tracker scaffolds on existing posts."""
-    post.setdefault("algorithm_signals", build_algorithm_signals())
-    post.setdefault("psychology_signals", build_psychology_signals())
-    post.setdefault("review_state", build_review_state())
-
-
-def load_tracker(tracker_path: str) -> dict:
-    """Load tracker JSON from disk."""
-    path = Path(tracker_path)
-    if not path.exists():
-        print(f"Error: tracker not found at {tracker_path}")
-        sys.exit(1)
-
-    with path.open("r", encoding="utf-8") as fh:
-        return json.load(fh)
-
-
-def save_tracker(tracker_path: str, tracker: dict) -> None:
-    """Write tracker JSON back to disk."""
-    with open(tracker_path, "w", encoding="utf-8") as fh:
-        json.dump(tracker, fh, ensure_ascii=False, indent=2)
-
-
-def backup_tracker(tracker_path: str, keep: int = 5) -> str:
-    """Copy the tracker to .bak-<ISO> and keep only the newest `keep` backups."""
-    path = Path(tracker_path)
-    if not path.exists():
-        return ""
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    backup_path = path.with_name(f"{path.name}.bak-{stamp}")
-    shutil.copy2(path, backup_path)
-
-    existing = sorted(
-        path.parent.glob(f"{path.name}.bak-*"),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-    for stale in existing[keep:]:
-        try:
-            stale.unlink()
-        except OSError:
-            pass
-    return str(backup_path)
+    hydrate_post_defaults(post)
 
 
 def build_new_post_entry(thread: dict, token: str) -> dict:
@@ -124,34 +83,18 @@ def build_new_post_entry(thread: dict, token: str) -> dict:
         "shares": 0,
     }
 
-    return {
-        "id": thread_id,
-        "text": text,
-        "created_at": created_at,
-        "permalink": thread.get("permalink", ""),
-        "media_type": thread.get("media_type", "TEXT"),
-        "is_reply_post": False,
-        "content_type": classify_content_type(text),
-        "topics": [],
-        "hook_type": None,
-        "ending_type": None,
-        "emotional_arc": None,
-        "word_count": count_words(text),
-        "paragraph_count": count_paragraphs(text),
-        "posting_time_slot": build_posting_time_slot(created_at),
-        "algorithm_signals": build_algorithm_signals(),
-        "psychology_signals": build_psychology_signals(),
-        "metrics": snapshot_metrics,
-        "performance_windows": {"24h": None, "72h": None, "7d": None},
-        "snapshots": [build_metric_snapshot(snapshot_metrics, created_at)],
-        "prediction_snapshot": None,
-        "review_state": build_review_state(),
-        "comments": replies,
-        "source": {
-            "import_path": "api-delta",
-            "data_completeness": "full",
-        },
-    }
+    return build_post_record(
+        post_id=thread_id,
+        text=text,
+        created_at=created_at,
+        permalink=thread.get("permalink", ""),
+        media_type=thread.get("media_type", "TEXT"),
+        source_path="api-delta",
+        data_completeness="full",
+        metrics=snapshot_metrics,
+        snapshots=[build_metric_snapshot(snapshot_metrics, created_at)],
+        comments=replies,
+    )
 
 
 def ingest_new_posts(tracker: dict, token: str) -> int:
@@ -175,7 +118,7 @@ def ingest_new_posts(tracker: dict, token: str) -> int:
         tracker.setdefault("posts", []).insert(0, entry)
 
     # Re-sort newest-first on created_at so the tracker stays ordered.
-    tracker["posts"].sort(key=lambda p: p.get("created_at", ""), reverse=True)
+    tracker["posts"] = sort_posts_newest_first(tracker["posts"])
     return len(new_threads)
 
 
@@ -251,7 +194,7 @@ def refresh_post(post: dict, token: str, update_comments: bool) -> None:
         "quotes": metrics.get("quotes", 0),
         "shares": post.get("metrics", {}).get("shares", 0),
     }
-    captured_at = datetime.now(timezone.utc).isoformat()
+    captured_at = utc_now_iso()
     snapshot = build_metric_snapshot(snapshot_metrics, created_at, captured_at=captured_at)
 
     post["metrics"] = snapshot_metrics
@@ -328,7 +271,11 @@ def main() -> None:
         print("[1/4] Using provided token (skip long-lived exchange)")
 
     print("[2/5] Loading tracker...")
-    tracker = load_tracker(args.tracker)
+    try:
+        tracker = load_tracker(args.tracker)
+    except Exception as exc:  # noqa: BLE001 - CLI should return actionable error text
+        print(f"Error: {exc}")
+        sys.exit(1)
     posts = tracker.get("posts", [])
     if not isinstance(posts, list):
         print("Error: tracker posts field is not an array")
@@ -359,7 +306,7 @@ def main() -> None:
         refresh_post(post, token, update_comments=args.update_comments)
         time.sleep(RATE_LIMIT_DELAY)
 
-    tracker["last_updated"] = datetime.now(timezone.utc).isoformat()
+    tracker["last_updated"] = utc_now_iso()
 
     print("[5/5] Writing tracker...")
     if args.backup:

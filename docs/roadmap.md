@@ -29,7 +29,7 @@
 | AKR-003 | Programmatic `concept_library.md` generation | done | P0 | setup / analysis | AKR-002 |
 | AKR-004 | Programmatic `brand_voice.md` generation | done | P0 | voice / drafting | AKR-002 |
 | AKR-005 | Shared artifact generation pipeline for `/setup` | done | P0 | setup / orchestration | AKR-002, AKR-003, AKR-004 |
-| AKR-006 | Shared tracker IO, backup, and mutation utilities | backlog | P0 | scripts / data integrity | - |
+| AKR-006 | Shared tracker IO, backup, and mutation utilities | done | P0 | scripts / data integrity | - |
 | AKR-007 | Enforce `/refresh` headless log contract in executable code | backlog | P0 | refresh / auditability | AKR-006 |
 | AKR-008 | Enforce freshness audit log contract for `/topics` and `/draft` | backlog | P0 | topics / draft / auditability | AKR-006 |
 | AKR-009 | Implement `/review` log-health checks and degraded-mode analysis helpers | backlog | P0 | review / auditability | AKR-007, AKR-008 |
@@ -133,7 +133,7 @@
 
 ### AKR-006 - Shared tracker IO, backup, and mutation utilities
 
-- Status: `backlog`
+- Status: `done`
 - Priority: `P0`
 - Problem:
   Backup rotation, tracker loading, schema defaults, and write safety are duplicated or only partially enforced across scripts and skill specs.
@@ -143,6 +143,7 @@
   Utilities shared by `predict`, `review`, `refresh`, setup generators, and future validation code.
 - Acceptance notes:
   Existing scripts can call the shared layer without behavior regressions, and backup naming/retention becomes consistent.
+  Implemented by `scripts/tracker_utils.py`, with `fetch_threads.py`, `parse_export.py`, and `update_snapshots.py` refactored onto the shared layer and regression coverage in `tests/test_tracker_utils.py` plus `tests/test_parse_export.py`.
 
 ### AKR-007 - Enforce `/refresh` headless log contract in executable code
 

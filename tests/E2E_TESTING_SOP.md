@@ -136,6 +136,22 @@ Expected result:
 - `.tmp\tracker-topic-freshness.json` updated in place
 - `algorithm_signals.topic_freshness` populated for posts
 
+### 7. Export parsing
+
+Create a minimal JSON export fixture in `.tmp\parse-export-e2e\threads-export.json`, then run:
+
+```powershell
+python scripts/parse_export.py `
+  --input .tmp\parse-export-e2e\threads-export.json `
+  --output .tmp\parse-export-e2e\tracker.json
+```
+
+Expected result:
+
+- exit code `0`
+- `.tmp\parse-export-e2e\tracker.json` created
+- output tracker contains a list-shaped `posts` array
+
 ## Linux / WSL Verified Flow
 
 ### 0. Prepare workspace-local temp output
@@ -191,6 +207,16 @@ python scripts/run_setup_artifacts.py \
 ```bash
 cp examples/tracker-example.json .tmp/tracker-topic-freshness.json
 python scripts/update_topic_freshness.py --tracker .tmp/tracker-topic-freshness.json
+```
+
+### 7. Export parsing
+
+Create a minimal JSON export fixture in `.tmp/parse-export-e2e/threads-export.json`, then run:
+
+```bash
+python scripts/parse_export.py \
+  --input .tmp/parse-export-e2e/threads-export.json \
+  --output .tmp/parse-export-e2e/tracker.json
 ```
 
 ## Verification Notes

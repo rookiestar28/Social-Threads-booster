@@ -25,10 +25,31 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+from tracker_utils import (
+    build_algorithm_signals as shared_build_algorithm_signals,
+    build_empty_tracker,
+    build_post_record,
+    build_posting_time_slot as shared_build_posting_time_slot,
+    build_psychology_signals as shared_build_psychology_signals,
+    build_review_state as shared_build_review_state,
+    classify_content_type as shared_classify_content_type,
+    count_paragraphs as shared_count_paragraphs,
+    count_words as shared_count_words,
+    save_tracker,
+    sort_posts_newest_first,
+    utc_now_iso,
+)
+
 try:
     from html.parser import HTMLParser
 except ImportError:
     pass
+
+
+def load_json_file(file_path: str) -> object:
+    # IMPORTANT: keep utf-8-sig here; Windows-generated fixture/export files may include a BOM.
+    with open(file_path, "r", encoding="utf-8-sig") as f:
+        return json.load(f)
 
 
 def find_threads_data(export_path: str) -> dict:
@@ -71,8 +92,7 @@ def find_threads_data(export_path: str) -> dict:
     if not result["posts_file"]:
         for json_file in export_dir.rglob("*.json"):
             try:
-                with open(json_file, "r", encoding="utf-8") as f:
-                    data = json.load(f)
+                data = load_json_file(str(json_file))
                 # Check if this looks like threads data
                 if isinstance(data, dict) and any(
                     k in data for k in ["threads", "text_post_threads", "thread_posts"]
@@ -100,8 +120,7 @@ def decode_meta_text(text: str) -> str:
 
 def parse_json_export(file_path: str) -> list:
     """Parse JSON format Meta data export."""
-    with open(file_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    data = load_json_file(file_path)
 
     posts = []
 
@@ -143,76 +162,17 @@ def parse_json_export(file_path: str) -> list:
 
 def build_algorithm_signals() -> dict:
     """Create an empty algorithm-signals scaffold for a post."""
-    return {
-        "discovery_surface": {
-            "threads": None,
-            "instagram": None,
-            "facebook": None,
-            "profile": None,
-            "topic_feed": None,
-            "other": None,
-        },
-        "topic_graph": {
-            "topic_tag_used": None,
-            "topic_tag_count": None,
-            "topic_match_clarity": None,
-            "single_topic_clarity": None,
-            "bio_topic_match": None,
-        },
-        "topic_freshness": {
-            "semantic_cluster": None,
-            "similar_recent_posts": None,
-            "recent_cluster_frequency": None,
-            "days_since_last_similar_post": None,
-            "freshness_score": None,
-            "fatigue_risk": None,
-        },
-        "originality_risk": {
-            "caption_content_mismatch": None,
-            "hashtag_stuffing_risk": None,
-            "duplicate_cluster_risk": None,
-            "minor_edit_repost_risk": None,
-            "low_value_reaction_risk": None,
-            "fake_engagement_pattern_risk": None,
-        },
-    }
+    return shared_build_algorithm_signals()
 
 
 def build_psychology_signals() -> dict:
     """Create an empty psychology-signals scaffold for a post."""
-    return {
-        "hook_payoff": {
-            "hook_strength": None,
-            "payoff_strength": None,
-            "hook_payoff_gap": None,
-        },
-        "share_motive_split": {
-            "dm_forwardability": None,
-            "public_repostability": None,
-            "identity_signal_strength": None,
-            "utility_share_strength": None,
-        },
-        "retellability": None,
-    }
+    return shared_build_psychology_signals()
 
 
 def build_review_state() -> dict:
     """Create an empty review-state scaffold for a post."""
-    return {
-        "last_reviewed_at": None,
-        "actual_checkpoint_hours": None,
-        "deviation_summary": None,
-        "calibration_notes": [],
-        "validated_signals": {
-            "discovery_surface_notes": None,
-            "topic_graph_notes": None,
-            "topic_freshness_notes": None,
-            "originality_risk_notes": None,
-            "hook_payoff_gap_notes": None,
-            "share_motive_split_notes": None,
-            "retellability_notes": None,
-        },
-    }
+    return shared_build_review_state()
 
 
 def extract_post_from_json(item: dict) -> Optional[dict]:
@@ -262,45 +222,15 @@ def extract_post_from_json(item: dict) -> Optional[dict]:
     if is_reply:
         return None
 
-    return {
-        "id": str(item.get("id", item.get("uri", f"export_{hash(text)}"))),
-        "text": text,
-        "created_at": timestamp,
-        "permalink": item.get("permalink", item.get("url", "")),
-        "media_type": detect_media_type(item),
-        "is_reply_post": False,
-        "content_type": classify_content_type(text),
-        "topics": [],
-        "hook_type": None,
-        "ending_type": None,
-        "emotional_arc": None,
-        "word_count": count_words(text),
-        "paragraph_count": count_paragraphs(text),
-        "posting_time_slot": build_posting_time_slot(timestamp),
-        "algorithm_signals": build_algorithm_signals(),
-        "psychology_signals": build_psychology_signals(),
-        "metrics": {
-            "views": 0,
-            "likes": 0,
-            "replies": 0,
-            "reposts": 0,
-            "quotes": 0,
-            "shares": 0,
-        },
-        "performance_windows": {
-            "24h": None,
-            "72h": None,
-            "7d": None,
-        },
-        "snapshots": [],
-        "prediction_snapshot": None,
-        "review_state": build_review_state(),
-        "comments": [],
-        "source": {
-            "import_path": "export",
-            "data_completeness": "partial",
-        },
-    }
+    return build_post_record(
+        post_id=str(item.get("id", item.get("uri", f"export_{hash(text)}"))),
+        text=text,
+        created_at=timestamp,
+        permalink=item.get("permalink", item.get("url", "")),
+        media_type=detect_media_type(item),
+        source_path="export",
+        data_completeness="partial",
+    )
 
 
 def detect_media_type(item: dict) -> str:
@@ -320,53 +250,22 @@ def detect_media_type(item: dict) -> str:
 
 def classify_content_type(text: str) -> str:
     """Basic content type classification."""
-    if not text:
-        return "other"
-    if "?" in text or "？" in text:
-        if text.strip().endswith(("?", "？")):
-            return "question"
-    if any(m in text for m in ["1.", "2.", "3.", "一、", "二、", "第一", "步驟"]):
-        return "tutorial"
-    if any(m in text for m in ["數據", "data", "%", "成長", "增長"]):
-        return "data-insight"
-    if any(m in text for m in ["我的經驗", "我之前", "那時候", "故事"]):
-        return "story"
-    return "opinion"
+    return shared_classify_content_type(text)
 
 
 def count_words(text: str) -> int:
     """Estimate word count from whitespace-separated tokens."""
-    return len(text.split()) if text else 0
+    return shared_count_words(text)
 
 
 def count_paragraphs(text: str) -> int:
     """Count non-empty paragraphs."""
-    if not text:
-        return 0
-    return len([chunk for chunk in text.splitlines() if chunk.strip()])
+    return shared_count_paragraphs(text)
 
 
 def build_posting_time_slot(timestamp: str) -> Optional[str]:
     """Convert an ISO timestamp into a coarse posting-time bucket."""
-    if not timestamp:
-        return None
-
-    try:
-        dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-    except ValueError:
-        return None
-
-    hour = dt.hour
-    if hour < 6:
-        window = "00:00-05:59"
-    elif hour < 12:
-        window = "06:00-11:59"
-    elif hour < 18:
-        window = "12:00-17:59"
-    else:
-        window = "18:00-23:59"
-
-    return f"{dt.strftime('%a')} {window}"
+    return shared_build_posting_time_slot(timestamp)
 
 
 class ThreadsHTMLParser(HTMLParser):
@@ -424,63 +323,28 @@ def parse_html_export(file_path: str) -> list:
         if not text:
             continue
 
-        posts.append({
-            "id": f"export_{hash(text)}",
-            "text": text,
-            "created_at": item.get("timestamp", ""),
-            "permalink": "",
-            "media_type": "TEXT",
-            "is_reply_post": False,
-            "content_type": classify_content_type(text),
-            "topics": [],
-            "hook_type": None,
-            "ending_type": None,
-            "emotional_arc": None,
-            "word_count": count_words(text),
-            "paragraph_count": count_paragraphs(text),
-            "posting_time_slot": build_posting_time_slot(item.get("timestamp", "")),
-            "algorithm_signals": build_algorithm_signals(),
-            "psychology_signals": build_psychology_signals(),
-            "metrics": {
-                "views": 0,
-                "likes": 0,
-                "replies": 0,
-                "reposts": 0,
-                "quotes": 0,
-                "shares": 0,
-            },
-            "performance_windows": {
-                "24h": None,
-                "72h": None,
-                "7d": None,
-            },
-            "snapshots": [],
-            "prediction_snapshot": None,
-            "review_state": build_review_state(),
-            "comments": [],
-            "source": {
-                "import_path": "export",
-                "data_completeness": "partial",
-            },
-        })
+        posts.append(
+            build_post_record(
+                post_id=f"export_{hash(text)}",
+                text=text,
+                created_at=item.get("timestamp", ""),
+                source_path="export",
+                data_completeness="partial",
+            )
+        )
 
     return posts
 
 
 def build_tracker(posts: list) -> dict:
     """Build the standard tracker JSON."""
-    # Sort by date, newest first
-    posts.sort(key=lambda p: p.get("created_at", ""), reverse=True)
-
-    return {
-        "account": {
-            "handle": "",
-            "source": "export",
-            "timezone": "UTC",
-        },
-        "posts": posts,
-        "last_updated": datetime.now(timezone.utc).isoformat(),
-    }
+    return build_empty_tracker(
+        account_handle="",
+        source="export",
+        timezone_name="UTC",
+        posts=sort_posts_newest_first(posts),
+        last_updated=utc_now_iso(),
+    )
 
 
 def main():
@@ -539,8 +403,7 @@ def main():
     print("[3/3] Building tracker...")
     tracker = build_tracker(posts)
 
-    with open(args.output, "w", encoding="utf-8") as f:
-        json.dump(tracker, f, ensure_ascii=False, indent=2)
+    save_tracker(args.output, tracker)
 
     print(f"\nDone! Saved {len(tracker['posts'])} posts to {args.output}")
     print("Note: Meta data export does not include engagement metrics.")
