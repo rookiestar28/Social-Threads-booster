@@ -25,7 +25,7 @@ import argparse
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from pathlib import Path
 
 try:
     from fetch_threads import (
@@ -50,6 +50,11 @@ from tracker_utils import (
     sort_posts_newest_first,
     utc_now_iso,
 )
+from refresh_logging import (
+    append_refresh_log,
+    build_refresh_failure_entry,
+    build_refresh_success_entry,
+)
 
 CHECKPOINT_TARGETS = {
     "24h": 24.0,
@@ -58,12 +63,20 @@ CHECKPOINT_TARGETS = {
 }
 
 
+class RefreshRunError(Exception):
+    def __init__(self, reason: str, detail: str, exit_code: int = 1):
+        super().__init__(detail)
+        self.reason = reason
+        self.detail = detail
+        self.exit_code = exit_code
+
+
 def ensure_extended_fields(post: dict) -> None:
     """Backfill newer tracker scaffolds on existing posts."""
     hydrate_post_defaults(post)
 
 
-def build_new_post_entry(thread: dict, token: str) -> dict:
+def build_new_post_entry(thread: dict, token: str) -> tuple[dict, int]:
     """Build a full v1 post entry for a post that isn't yet in the tracker."""
     thread_id = thread["id"]
     text = thread.get("text", "")
@@ -83,7 +96,8 @@ def build_new_post_entry(thread: dict, token: str) -> dict:
         "shares": 0,
     }
 
-    return build_post_record(
+    return (
+        build_post_record(
         post_id=thread_id,
         text=text,
         created_at=created_at,
@@ -94,13 +108,15 @@ def build_new_post_entry(thread: dict, token: str) -> dict:
         metrics=snapshot_metrics,
         snapshots=[build_metric_snapshot(snapshot_metrics, created_at)],
         comments=replies,
+        ),
+        len(replies),
     )
 
 
-def ingest_new_posts(tracker: dict, token: str) -> int:
+def ingest_new_posts(tracker: dict, token: str) -> tuple[int, int]:
     """Fetch the full thread list and append any posts not yet in the tracker.
 
-    Returns the number of newly inserted posts.
+    Returns the number of newly inserted posts and replies added with those posts.
     """
     print("  Listing posts from API to find new entries...")
     user = get_user_profile(token)
@@ -110,16 +126,18 @@ def ingest_new_posts(tracker: dict, token: str) -> int:
 
     if not new_threads:
         print("  No new posts to ingest.")
-        return 0
+        return 0, 0
 
     print(f"  Found {len(new_threads)} new post(s); fetching full data...")
+    replies_added = 0
     for thread in new_threads:
-        entry = build_new_post_entry(thread, token)
+        entry, reply_count = build_new_post_entry(thread, token)
         tracker.setdefault("posts", []).insert(0, entry)
+        replies_added += reply_count
 
     # Re-sort newest-first on created_at so the tracker stays ordered.
     tracker["posts"] = sort_posts_newest_first(tracker["posts"])
-    return len(new_threads)
+    return len(new_threads), replies_added
 
 
 def select_posts(posts: list, post_ids: list[str], recent: int, update_all: bool) -> list:
@@ -179,7 +197,35 @@ def append_snapshot(post: dict, snapshot: dict) -> None:
     snapshots.append(snapshot)
 
 
-def refresh_post(post: dict, token: str, update_comments: bool) -> None:
+def merge_comments(existing: list, incoming: list) -> tuple[list, int]:
+    known = {
+        (
+            str(comment.get("user", "")),
+            str(comment.get("text", "")),
+            str(comment.get("created_at", "")),
+        )
+        for comment in existing
+    }
+    merged = list(existing)
+    added = 0
+
+    for comment in incoming:
+        key = (
+            str(comment.get("user", "")),
+            str(comment.get("text", "")),
+            str(comment.get("created_at", "")),
+        )
+        if key in known:
+            continue
+        known.add(key)
+        merged.append(comment)
+        added += 1
+
+    merged.sort(key=lambda comment: str(comment.get("created_at", "")), reverse=True)
+    return merged, added
+
+
+def refresh_post(post: dict, token: str, update_comments: bool) -> int:
     """Refresh a single post from the Threads API."""
     ensure_extended_fields(post)
     post_id = str(post.get("id", ""))
@@ -201,9 +247,99 @@ def refresh_post(post: dict, token: str, update_comments: bool) -> None:
     append_snapshot(post, snapshot)
     update_performance_windows(post, snapshot)
 
+    replies_added = 0
     if update_comments:
         time.sleep(RATE_LIMIT_DELAY)
-        post["comments"] = fetch_thread_replies(post_id, token)
+        merged_comments, replies_added = merge_comments(
+            post.get("comments") or [],
+            fetch_thread_replies(post_id, token),
+        )
+        post["comments"] = merged_comments
+
+    return replies_added
+
+
+def infer_failure_reason(exc: Exception) -> str:
+    detail = str(exc).lower()
+    if "timed out" in detail or "timeout" in detail:
+        return "timeout"
+    return "other"
+
+
+def resolve_log_path(tracker_path: str, explicit_log_path: str | None) -> Path:
+    if explicit_log_path:
+        return Path(explicit_log_path).resolve()
+    return Path(tracker_path).resolve().with_name("threads_refresh.log")
+
+
+def run_refresh(args: argparse.Namespace) -> dict:
+    if not args.token:
+        raise RefreshRunError("other", "no API token. Pass --token or set $THREADS_API_TOKEN.")
+
+    token = args.token
+    if args.app_secret:
+        print("[1/4] Exchanging for long-lived token...")
+        token = exchange_long_lived_token(token, args.app_secret)
+    else:
+        print("[1/4] Using provided token (skip long-lived exchange)")
+
+    print("[2/5] Loading tracker...")
+    try:
+        tracker = load_tracker(args.tracker)
+    except Exception as exc:  # noqa: BLE001 - CLI should return actionable error text
+        raise RefreshRunError("other", str(exc)) from exc
+
+    posts = tracker.get("posts", [])
+    if not isinstance(posts, list):
+        raise RefreshRunError("other", "tracker posts field is not an array")
+
+    new_post_count = 0
+    replies_added = 0
+    if args.include_new_posts:
+        print("[3/5] Checking for new posts via API...")
+        new_post_count, replies_added = ingest_new_posts(tracker, token)
+        posts = tracker.get("posts", [])
+    else:
+        print("[3/5] Skipping new-post discovery (pass --include-new-posts to enable)")
+
+    if not posts:
+        raise RefreshRunError("other", "tracker contains no posts to refresh")
+
+    selected_posts = select_posts(posts, args.post_id, args.recent, args.all)
+    if not selected_posts:
+        raise RefreshRunError("other", "no matching posts found in the tracker")
+
+    print(f"[4/5] Refreshing metrics on {len(selected_posts)} post(s)...")
+    for idx, post in enumerate(selected_posts, 1):
+        post_id = str(post.get("id", ""))
+        summary = post.get("text", "")[:40].replace("\n", " ")
+        print(f"  [{idx}/{len(selected_posts)}] {post_id}: {summary}...")
+        replies_added += refresh_post(post, token, update_comments=args.update_comments)
+        time.sleep(RATE_LIMIT_DELAY)
+
+    tracker["last_updated"] = utc_now_iso()
+
+    print("[5/5] Writing tracker...")
+    if args.backup:
+        try:
+            backup_path = backup_tracker(args.tracker)
+        except Exception as exc:  # noqa: BLE001 - backup failures need their own reason code
+            raise RefreshRunError("backup_failed", str(exc)) from exc
+        if backup_path:
+            print(f"  Backup written to {backup_path}")
+
+    save_tracker(args.tracker, tracker)
+    print(
+        f"Done. Refreshed {len(selected_posts)} post(s)"
+        f"{f', ingested {new_post_count} new' if new_post_count else ''} in {args.tracker}"
+    )
+
+    return {
+        "posts_scraped": len(selected_posts) + new_post_count,
+        "new_posts": new_post_count,
+        "updated_posts": len(selected_posts),
+        "replies_added": replies_added,
+    }
 
 
 def main() -> None:
@@ -257,67 +393,68 @@ def main() -> None:
         action="store_true",
         help="Write a .bak-<ISO> copy of the tracker before saving (keeps 5 most recent)",
     )
-    args = parser.parse_args()
-
-    if not args.token:
-        print("Error: no API token. Pass --token or set $THREADS_API_TOKEN.")
-        sys.exit(1)
-
-    token = args.token
-    if args.app_secret:
-        print("[1/4] Exchanging for long-lived token...")
-        token = exchange_long_lived_token(token, args.app_secret)
-    else:
-        print("[1/4] Using provided token (skip long-lived exchange)")
-
-    print("[2/5] Loading tracker...")
-    try:
-        tracker = load_tracker(args.tracker)
-    except Exception as exc:  # noqa: BLE001 - CLI should return actionable error text
-        print(f"Error: {exc}")
-        sys.exit(1)
-    posts = tracker.get("posts", [])
-    if not isinstance(posts, list):
-        print("Error: tracker posts field is not an array")
-        sys.exit(1)
-
-    new_post_count = 0
-    if args.include_new_posts:
-        print("[3/5] Checking for new posts via API...")
-        new_post_count = ingest_new_posts(tracker, token)
-        posts = tracker.get("posts", [])
-    else:
-        print("[3/5] Skipping new-post discovery (pass --include-new-posts to enable)")
-
-    if not posts:
-        print("Error: tracker contains no posts to refresh")
-        sys.exit(1)
-
-    selected_posts = select_posts(posts, args.post_id, args.recent, args.all)
-    if not selected_posts:
-        print("Error: no matching posts found in the tracker")
-        sys.exit(1)
-
-    print(f"[4/5] Refreshing metrics on {len(selected_posts)} post(s)...")
-    for idx, post in enumerate(selected_posts, 1):
-        post_id = str(post.get("id", ""))
-        summary = post.get("text", "")[:40].replace("\n", " ")
-        print(f"  [{idx}/{len(selected_posts)}] {post_id}: {summary}...")
-        refresh_post(post, token, update_comments=args.update_comments)
-        time.sleep(RATE_LIMIT_DELAY)
-
-    tracker["last_updated"] = utc_now_iso()
-
-    print("[5/5] Writing tracker...")
-    if args.backup:
-        backup_path = backup_tracker(args.tracker)
-        if backup_path:
-            print(f"  Backup written to {backup_path}")
-    save_tracker(args.tracker, tracker)
-    print(
-        f"Done. Refreshed {len(selected_posts)} post(s)"
-        f"{f', ingested {new_post_count} new' if new_post_count else ''} in {args.tracker}"
+    parser.add_argument(
+        "--headless",
+        action="store_true",
+        help="Write contract-compliant refresh logs instead of prompting for user interaction",
     )
+    parser.add_argument(
+        "--log-file",
+        default=None,
+        help="Refresh log path (default: alongside the tracker as threads_refresh.log)",
+    )
+    args = parser.parse_args()
+    log_path = resolve_log_path(args.tracker, args.log_file)
+
+    try:
+        result = run_refresh(args)
+    except RefreshRunError as exc:
+        if args.headless:
+            try:
+                append_refresh_log(
+                    log_path,
+                    build_refresh_failure_entry(
+                        reason=exc.reason,
+                        detail=exc.detail,
+                        mode="api",
+                    ),
+                )
+            except Exception as log_exc:  # noqa: BLE001 - preserve original failure
+                print(f"Error: {exc.detail}")
+                print(f"Refresh logging also failed: {log_exc}")
+                sys.exit(exc.exit_code)
+
+        print(f"Error: {exc.detail}")
+        sys.exit(exc.exit_code)
+    except Exception as exc:  # noqa: BLE001 - CLI should still log bounded failure output
+        reason = infer_failure_reason(exc)
+        detail = str(exc)
+        if args.headless:
+            try:
+                append_refresh_log(
+                    log_path,
+                    build_refresh_failure_entry(
+                        reason=reason,
+                        detail=detail,
+                        mode="api",
+                    ),
+                )
+            except Exception as log_exc:  # noqa: BLE001 - preserve original failure
+                print(f"Error: {detail}")
+                print(f"Refresh logging also failed: {log_exc}")
+                sys.exit(1)
+
+        print(f"Error: {detail}")
+        sys.exit(1)
+
+    if args.headless:
+        append_refresh_log(
+            log_path,
+            build_refresh_success_entry(
+                **result,
+                mode="api",
+            ),
+        )
 
 
 if __name__ == "__main__":

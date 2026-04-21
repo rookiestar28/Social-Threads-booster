@@ -152,6 +152,21 @@ Expected result:
 - `.tmp\parse-export-e2e\tracker.json` created
 - output tracker contains a list-shaped `posts` array
 
+### 8. Headless refresh failure logging
+
+```powershell
+python scripts/update_snapshots.py `
+  --tracker examples\tracker-example.json `
+  --headless `
+  --log-file .tmp\threads_refresh.log
+```
+
+Expected result:
+
+- exit code is non-zero when no API token is available
+- `.tmp\threads_refresh.log` is created
+- the appended JSON line contains `ok: false` and a machine-readable `reason`
+
 ## Linux / WSL Verified Flow
 
 ### 0. Prepare workspace-local temp output
@@ -217,6 +232,15 @@ Create a minimal JSON export fixture in `.tmp/parse-export-e2e/threads-export.js
 python scripts/parse_export.py \
   --input .tmp/parse-export-e2e/threads-export.json \
   --output .tmp/parse-export-e2e/tracker.json
+```
+
+### 8. Headless refresh failure logging
+
+```bash
+python scripts/update_snapshots.py \
+  --tracker examples/tracker-example.json \
+  --headless \
+  --log-file .tmp/threads_refresh.log
 ```
 
 ## Verification Notes

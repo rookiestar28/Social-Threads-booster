@@ -45,6 +45,7 @@ Scripts live at `**/scripts/`:
 - `generate_concept_library.py` — deterministic `concept_library.md` generation from tracker data
 - `generate_brand_voice.py` — deterministic `brand_voice.md` generation from tracker data
 - `run_setup_artifacts.py` — single-command setup artifact pipeline for `style_guide.md`, `concept_library.md`, optional `brand_voice.md`, and companion markdown files
+- `refresh_logging.py` — shared JSON-line writer for `threads_refresh.log`
 - `tracker_utils.py` — shared tracker IO, backup rotation, scaffold defaults, and post hydration helpers
 - `update_snapshots.py` — periodic metrics refresh (API)
 - `update_topic_freshness.py` — semantic cluster + freshness scoring
