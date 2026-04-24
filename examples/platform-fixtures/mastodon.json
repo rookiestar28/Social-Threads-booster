@@ -1,0 +1,32 @@
+{
+  "platform": "mastodon",
+  "account": {
+    "account_id": "mastodon:https://mastodon.social/@seo_lisa",
+    "display_name": "@seo_lisa@mastodon.social"
+  },
+  "capability_expectations": {
+    "credential_missing": {
+      "ok": false,
+      "reason": "missing_mastodon_oauth"
+    }
+  },
+  "posts": [
+    {
+      "id": "md_status_1",
+      "text": "Federated post about evergreen content.",
+      "created_at": "2026-04-07T00:00:00+00:00",
+      "content_format": "text",
+      "data_completeness": "fixture",
+      "metrics": {
+        "reaction_count": 11,
+        "comment_count": 1,
+        "share_count": 3,
+        "view_count": null
+      },
+      "raw": {
+        "instance": "mastodon.social",
+        "visibility": "public"
+      }
+    }
+  ]
+}

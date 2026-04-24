@@ -1,0 +1,32 @@
+{
+  "platform": "instagram",
+  "account": {
+    "account_id": "instagram:business_1",
+    "display_name": "SEO Studio"
+  },
+  "capability_expectations": {
+    "credential_missing": {
+      "ok": false,
+      "reason": "missing_meta_graph_token"
+    }
+  },
+  "posts": [
+    {
+      "id": "ig_media_1",
+      "text": "Carousel caption about content audits.",
+      "created_at": "2026-04-02T00:00:00+00:00",
+      "content_format": "image_carousel",
+      "data_completeness": "fixture",
+      "metrics": {
+        "view_count": 500,
+        "reaction_count": 44,
+        "comment_count": 6,
+        "save_count": 12,
+        "share_count": 5
+      },
+      "raw": {
+        "media_product_type": "FEED"
+      }
+    }
+  ]
+}

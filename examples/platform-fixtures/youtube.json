@@ -1,0 +1,33 @@
+{
+  "platform": "youtube",
+  "account": {
+    "account_id": "youtube:channel_1",
+    "display_name": "SEO Video Lab"
+  },
+  "capability_expectations": {
+    "credential_missing": {
+      "ok": false,
+      "reason": "missing_google_oauth"
+    }
+  },
+  "posts": [
+    {
+      "id": "yt_video_1",
+      "text": "How to audit Core Web Vitals",
+      "created_at": "2026-04-04T00:00:00+00:00",
+      "content_format": "video",
+      "data_completeness": "fixture",
+      "metrics": {
+        "view_count": 2400,
+        "reaction_count": 120,
+        "comment_count": 18,
+        "share_count": null,
+        "watch_time_seconds": 96000
+      },
+      "raw": {
+        "duration": "PT8M",
+        "visibility": "public"
+      }
+    }
+  ]
+}

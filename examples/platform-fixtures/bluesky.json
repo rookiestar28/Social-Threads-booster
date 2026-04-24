@@ -1,0 +1,31 @@
+{
+  "platform": "bluesky",
+  "account": {
+    "account_id": "bluesky:seo-lisa.bsky.social",
+    "display_name": "seo-lisa.bsky.social"
+  },
+  "capability_expectations": {
+    "credential_missing": {
+      "ok": false,
+      "reason": "missing_atproto_session"
+    }
+  },
+  "posts": [
+    {
+      "id": "at://did:plc:example/app.bsky.feed.post/1",
+      "text": "Open network post about creator analytics.",
+      "created_at": "2026-04-06T00:00:00+00:00",
+      "content_format": "text",
+      "data_completeness": "fixture",
+      "metrics": {
+        "reaction_count": 9,
+        "comment_count": 2,
+        "share_count": 4,
+        "view_count": null
+      },
+      "raw": {
+        "cid": "bafyfixture"
+      }
+    }
+  ]
+}
