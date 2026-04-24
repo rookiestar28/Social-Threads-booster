@@ -12,6 +12,18 @@ Accordingly, E2E means:
 - verify the output artifact or mutated tracker result
 - keep all temporary artifacts inside `.tmp/`
 
+## Preferred Repo-Local Runner
+
+Use the maintained runner for the standard deterministic script sweep:
+
+```bash
+python scripts/run_cli_e2e.py
+```
+
+The runner executes the documented fixture workflow, validates generated artifacts, keeps output under `.tmp/cli-e2e`, and intentionally treats missing credential headless refresh as an expected logged failure.
+
+Use the manual commands below when debugging one lane, validating a newly added script before it is added to the runner, or capturing narrower failure evidence.
+
 ## Script Validation Matrix
 
 ### Deterministic local scripts

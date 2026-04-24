@@ -29,7 +29,7 @@ Required minimum gate:
 2. `pre-commit run --all-files --show-diff-on-failure` when `pre-commit` is available
 3. `python scripts/check_internal_guardrails.py`
 4. `python -m unittest discover -s tests -p "test_*.py"`
-5. Targeted CLI E2E per `tests/E2E_TESTING_SOP.md` for every touched deterministic script
+5. Repo-local CLI E2E runner, plus any targeted CLI E2E from `tests/E2E_TESTING_SOP.md` for touched deterministic scripts not covered by the runner
 
 Additional gate when credential-dependent scripts are touched:
 
@@ -106,13 +106,19 @@ python scripts/check_internal_guardrails.py
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-5. Run targeted CLI E2E for changed deterministic scripts:
+5. Run the repo-local CLI E2E runner:
+
+```bash
+python scripts/run_cli_e2e.py
+```
+
+6. Run additional targeted CLI E2E for changed deterministic scripts not covered by the runner:
 
 ```bash
 # Follow the commands in tests/E2E_TESTING_SOP.md
 ```
 
-6. If credential-dependent scripts were touched, record one of:
+7. If credential-dependent scripts were touched, record one of:
 
 - a manual smoke command and result, or
 - a clear statement that credentials were unavailable
