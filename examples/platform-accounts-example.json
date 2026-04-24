@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "accounts": [
+    {
+      "key": "threads_primary",
+      "platform": "threads",
+      "account_id": "threads-user-id-or-handle",
+      "account_type": "threads_user",
+      "display_name": "Primary Threads account",
+      "credential_source": {
+        "type": "env",
+        "name": "THREADS_API_TOKEN"
+      },
+      "notes": [
+        "Example only. Do not store token values in this file."
+      ]
+    },
+    {
+      "key": "youtube_primary",
+      "platform": "youtube",
+      "account_id": "youtube-channel-id",
+      "account_type": "youtube_channel",
+      "display_name": "Primary YouTube channel",
+      "credential_source": {
+        "type": "external_ref",
+        "ref": "secret-manager://youtube-primary"
+      },
+      "notes": [
+        "Example only. External references are not locally resolved by default."
+      ]
+    }
+  ]
+}
