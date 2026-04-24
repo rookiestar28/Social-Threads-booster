@@ -1,0 +1,700 @@
+{
+  "schema_version": 1,
+  "project": "Social-Threads-Booster",
+  "reviewed_at": "2026-04-25",
+  "review_required_before_adapter": true,
+  "status_vocabulary": [
+    "available",
+    "available_with_owned_account",
+    "review_gated",
+    "tier_gated",
+    "limited",
+    "not_publicly_available",
+    "unknown_verify_before_use"
+  ],
+  "capability_vocabulary": [
+    "read_posts",
+    "read_comments",
+    "read_replies",
+    "read_public_metrics",
+    "read_owned_insights",
+    "publish_text",
+    "publish_media",
+    "reply",
+    "delete_post",
+    "search_public_content",
+    "refresh_snapshots"
+  ],
+  "platforms": {
+    "threads": {
+      "display_name": "Threads",
+      "official_docs": [
+        "https://developers.facebook.com/docs/threads/"
+      ],
+      "auth_model": "Meta OAuth / Graph API tokens with Threads permissions",
+      "account_contexts": [
+        "threads_user"
+      ],
+      "implementation_notes": [
+        "Treat the current repository behavior as the first concrete adapter.",
+        "Do not assume all insight metrics are available for every account or app mode.",
+        "Preserve compatibility with threads_daily_tracker.json until generic tracker migration is complete."
+      ],
+      "capabilities": {
+        "read_posts": {
+          "status": "available_with_owned_account",
+          "gate": "Threads API access and account authorization"
+        },
+        "read_comments": {
+          "status": "limited",
+          "gate": "API-supported replies/comments only"
+        },
+        "read_replies": {
+          "status": "limited",
+          "gate": "API-supported replies only"
+        },
+        "read_public_metrics": {
+          "status": "limited",
+          "gate": "public metrics exposed by Threads API"
+        },
+        "read_owned_insights": {
+          "status": "review_gated",
+          "gate": "eligible account, app review, and insight permissions"
+        },
+        "publish_text": {
+          "status": "review_gated",
+          "gate": "publishing permissions"
+        },
+        "publish_media": {
+          "status": "review_gated",
+          "gate": "media container and publishing permissions"
+        },
+        "reply": {
+          "status": "limited",
+          "gate": "API-supported reply actions"
+        },
+        "delete_post": {
+          "status": "unknown_verify_before_use",
+          "gate": "verify current Threads API support before implementation"
+        },
+        "search_public_content": {
+          "status": "not_publicly_available",
+          "gate": "do not implement as scraping fallback"
+        },
+        "refresh_snapshots": {
+          "status": "available_with_owned_account",
+          "gate": "owned account token"
+        }
+      }
+    },
+    "instagram": {
+      "display_name": "Instagram",
+      "official_docs": [
+        "https://developers.facebook.com/docs/instagram-platform/"
+      ],
+      "auth_model": "Meta OAuth / Instagram Graph API with business or creator account context",
+      "account_contexts": [
+        "instagram_business_account",
+        "instagram_creator_account"
+      ],
+      "implementation_notes": [
+        "Keep Instagram separate from Threads even though both use Meta Graph concepts.",
+        "Do not assume personal account support for business/creator API surfaces."
+      ],
+      "capabilities": {
+        "read_posts": {
+          "status": "available_with_owned_account",
+          "gate": "business or creator account authorization"
+        },
+        "read_comments": {
+          "status": "review_gated",
+          "gate": "comment permissions and eligible media"
+        },
+        "read_replies": {
+          "status": "review_gated",
+          "gate": "comment/reply permissions"
+        },
+        "read_public_metrics": {
+          "status": "limited",
+          "gate": "fields exposed for media"
+        },
+        "read_owned_insights": {
+          "status": "review_gated",
+          "gate": "insights permissions and eligible account"
+        },
+        "publish_text": {
+          "status": "limited",
+          "gate": "content publishing supports media-centric publishing"
+        },
+        "publish_media": {
+          "status": "review_gated",
+          "gate": "content publishing permissions"
+        },
+        "reply": {
+          "status": "review_gated",
+          "gate": "comment management permissions"
+        },
+        "delete_post": {
+          "status": "unknown_verify_before_use",
+          "gate": "verify current Graph API delete support"
+        },
+        "search_public_content": {
+          "status": "not_publicly_available",
+          "gate": "do not implement as scraping fallback"
+        },
+        "refresh_snapshots": {
+          "status": "available_with_owned_account",
+          "gate": "owned media and insight permissions"
+        }
+      }
+    },
+    "facebook_pages": {
+      "display_name": "Facebook Pages",
+      "official_docs": [
+        "https://developers.facebook.com/docs/pages-api/"
+      ],
+      "auth_model": "Meta OAuth / Page access token",
+      "account_contexts": [
+        "facebook_page"
+      ],
+      "implementation_notes": [
+        "Model Page identity separately from user identity.",
+        "Use Page-scoped tokens and permissions."
+      ],
+      "capabilities": {
+        "read_posts": {
+          "status": "available_with_owned_account",
+          "gate": "Page token and page read permissions"
+        },
+        "read_comments": {
+          "status": "review_gated",
+          "gate": "Page engagement/comment permissions"
+        },
+        "read_replies": {
+          "status": "review_gated",
+          "gate": "Page engagement/comment permissions"
+        },
+        "read_public_metrics": {
+          "status": "limited",
+          "gate": "fields exposed by Pages API"
+        },
+        "read_owned_insights": {
+          "status": "review_gated",
+          "gate": "Page insights permissions"
+        },
+        "publish_text": {
+          "status": "review_gated",
+          "gate": "Page publishing permissions"
+        },
+        "publish_media": {
+          "status": "review_gated",
+          "gate": "Page publishing permissions"
+        },
+        "reply": {
+          "status": "review_gated",
+          "gate": "Page engagement permissions"
+        },
+        "delete_post": {
+          "status": "review_gated",
+          "gate": "Page management permissions"
+        },
+        "search_public_content": {
+          "status": "not_publicly_available",
+          "gate": "do not implement as scraping fallback"
+        },
+        "refresh_snapshots": {
+          "status": "available_with_owned_account",
+          "gate": "Page token"
+        }
+      }
+    },
+    "youtube": {
+      "display_name": "YouTube",
+      "official_docs": [
+        "https://developers.google.com/youtube/v3/docs",
+        "https://developers.google.com/youtube/analytics"
+      ],
+      "auth_model": "Google OAuth with YouTube Data API and optional YouTube Analytics API scopes",
+      "account_contexts": [
+        "youtube_channel"
+      ],
+      "implementation_notes": [
+        "Data API and Analytics API are separate surfaces.",
+        "Owned-channel analytics must not be treated as public metrics."
+      ],
+      "capabilities": {
+        "read_posts": {
+          "status": "available",
+          "gate": "videos/channels API quota"
+        },
+        "read_comments": {
+          "status": "available",
+          "gate": "commentThreads API quota and video comment visibility"
+        },
+        "read_replies": {
+          "status": "available",
+          "gate": "comments API quota"
+        },
+        "read_public_metrics": {
+          "status": "available",
+          "gate": "videos.list statistics fields"
+        },
+        "read_owned_insights": {
+          "status": "available_with_owned_account",
+          "gate": "YouTube Analytics API and channel authorization"
+        },
+        "publish_text": {
+          "status": "not_publicly_available",
+          "gate": "YouTube is video/community-surface specific"
+        },
+        "publish_media": {
+          "status": "available_with_owned_account",
+          "gate": "video upload authorization and quota"
+        },
+        "reply": {
+          "status": "available_with_owned_account",
+          "gate": "comment authorization"
+        },
+        "delete_post": {
+          "status": "available_with_owned_account",
+          "gate": "owner authorization"
+        },
+        "search_public_content": {
+          "status": "available",
+          "gate": "search API quota"
+        },
+        "refresh_snapshots": {
+          "status": "available",
+          "gate": "Data API quota; Analytics requires owner auth"
+        }
+      }
+    },
+    "tiktok": {
+      "display_name": "TikTok",
+      "official_docs": [
+        "https://developers.tiktok.com/doc/content-posting-api-get-started/",
+        "https://developers.tiktok.com/doc/research-api-get-started/"
+      ],
+      "auth_model": "TikTok developer app authorization; product-specific approvals",
+      "account_contexts": [
+        "tiktok_creator",
+        "tiktok_research_app",
+        "tiktok_business_account"
+      ],
+      "implementation_notes": [
+        "Content Posting, Research, and Business APIs are distinct products.",
+        "Do not claim general organic analytics support until verified for the exact approved product."
+      ],
+      "capabilities": {
+        "read_posts": {
+          "status": "limited",
+          "gate": "Research API or owned-account product access"
+        },
+        "read_comments": {
+          "status": "unknown_verify_before_use",
+          "gate": "verify current product access"
+        },
+        "read_replies": {
+          "status": "unknown_verify_before_use",
+          "gate": "verify current product access"
+        },
+        "read_public_metrics": {
+          "status": "limited",
+          "gate": "product-specific access"
+        },
+        "read_owned_insights": {
+          "status": "unknown_verify_before_use",
+          "gate": "verify current creator/business API access"
+        },
+        "publish_text": {
+          "status": "not_publicly_available",
+          "gate": "TikTok posting is media-centric"
+        },
+        "publish_media": {
+          "status": "review_gated",
+          "gate": "Content Posting API approval"
+        },
+        "reply": {
+          "status": "unknown_verify_before_use",
+          "gate": "verify current product access"
+        },
+        "delete_post": {
+          "status": "unknown_verify_before_use",
+          "gate": "verify current product access"
+        },
+        "search_public_content": {
+          "status": "review_gated",
+          "gate": "Research API approval and use-case restrictions"
+        },
+        "refresh_snapshots": {
+          "status": "limited",
+          "gate": "product-specific access"
+        }
+      }
+    },
+    "x": {
+      "display_name": "X",
+      "official_docs": [
+        "https://docs.x.com/x-api/introduction"
+      ],
+      "auth_model": "X OAuth 2.0 / OAuth 1.0a depending on endpoint and user context",
+      "account_contexts": [
+        "x_user"
+      ],
+      "implementation_notes": [
+        "API tier and OAuth context materially affect available operations.",
+        "Every operation must fail closed when tier or scope is unavailable."
+      ],
+      "capabilities": {
+        "read_posts": {
+          "status": "tier_gated",
+          "gate": "API tier and read scopes"
+        },
+        "read_comments": {
+          "status": "tier_gated",
+          "gate": "conversation/reply access by API tier"
+        },
+        "read_replies": {
+          "status": "tier_gated",
+          "gate": "conversation/reply access by API tier"
+        },
+        "read_public_metrics": {
+          "status": "tier_gated",
+          "gate": "tweet fields and API tier"
+        },
+        "read_owned_insights": {
+          "status": "tier_gated",
+          "gate": "metrics availability by account and tier"
+        },
+        "publish_text": {
+          "status": "tier_gated",
+          "gate": "tweet.write scope and API tier"
+        },
+        "publish_media": {
+          "status": "tier_gated",
+          "gate": "media upload endpoint, scope, and API tier"
+        },
+        "reply": {
+          "status": "tier_gated",
+          "gate": "write scope and API tier"
+        },
+        "delete_post": {
+          "status": "tier_gated",
+          "gate": "owner auth and API tier"
+        },
+        "search_public_content": {
+          "status": "tier_gated",
+          "gate": "search access by API tier"
+        },
+        "refresh_snapshots": {
+          "status": "tier_gated",
+          "gate": "read scopes and API tier"
+        }
+      }
+    },
+    "linkedin": {
+      "display_name": "LinkedIn",
+      "official_docs": [
+        "https://learn.microsoft.com/en-us/linkedin/marketing/community-management/shares/posts-api"
+      ],
+      "auth_model": "LinkedIn OAuth / REST.li with member or organization permissions",
+      "account_contexts": [
+        "linkedin_member",
+        "linkedin_organization"
+      ],
+      "implementation_notes": [
+        "Member and organization authoring must be modeled separately.",
+        "Community management and marketing APIs may require access review."
+      ],
+      "capabilities": {
+        "read_posts": {
+          "status": "review_gated",
+          "gate": "member or organization permissions"
+        },
+        "read_comments": {
+          "status": "review_gated",
+          "gate": "social actions permissions"
+        },
+        "read_replies": {
+          "status": "review_gated",
+          "gate": "social actions permissions"
+        },
+        "read_public_metrics": {
+          "status": "limited",
+          "gate": "fields exposed for authorized resources"
+        },
+        "read_owned_insights": {
+          "status": "review_gated",
+          "gate": "marketing/community management access"
+        },
+        "publish_text": {
+          "status": "review_gated",
+          "gate": "posting permissions"
+        },
+        "publish_media": {
+          "status": "review_gated",
+          "gate": "posting permissions and media flow"
+        },
+        "reply": {
+          "status": "review_gated",
+          "gate": "social actions permissions"
+        },
+        "delete_post": {
+          "status": "review_gated",
+          "gate": "owner authorization"
+        },
+        "search_public_content": {
+          "status": "not_publicly_available",
+          "gate": "do not implement as scraping fallback"
+        },
+        "refresh_snapshots": {
+          "status": "review_gated",
+          "gate": "authorized member or organization resources"
+        }
+      }
+    },
+    "reddit": {
+      "display_name": "Reddit",
+      "official_docs": [
+        "https://developers.reddit.com/docs/api/redditapi"
+      ],
+      "auth_model": "Reddit OAuth application and user agent",
+      "account_contexts": [
+        "reddit_user",
+        "subreddit"
+      ],
+      "implementation_notes": [
+        "Map submissions/comments to generic post/comment shapes without inventing impressions or reach.",
+        "Respect subreddit rules and Reddit API/user-agent requirements."
+      ],
+      "capabilities": {
+        "read_posts": {
+          "status": "available",
+          "gate": "API rules and listing access"
+        },
+        "read_comments": {
+          "status": "available",
+          "gate": "comment visibility"
+        },
+        "read_replies": {
+          "status": "available",
+          "gate": "comment tree visibility"
+        },
+        "read_public_metrics": {
+          "status": "limited",
+          "gate": "score/comment fields; no general impressions"
+        },
+        "read_owned_insights": {
+          "status": "not_publicly_available",
+          "gate": "do not synthesize missing creator analytics"
+        },
+        "publish_text": {
+          "status": "available_with_owned_account",
+          "gate": "OAuth user auth and subreddit rules"
+        },
+        "publish_media": {
+          "status": "limited",
+          "gate": "OAuth user auth and supported submission type"
+        },
+        "reply": {
+          "status": "available_with_owned_account",
+          "gate": "OAuth user auth"
+        },
+        "delete_post": {
+          "status": "available_with_owned_account",
+          "gate": "owner/moderator authorization"
+        },
+        "search_public_content": {
+          "status": "available",
+          "gate": "API search/listing behavior"
+        },
+        "refresh_snapshots": {
+          "status": "available",
+          "gate": "public listing and item lookup"
+        }
+      }
+    },
+    "bluesky": {
+      "display_name": "Bluesky / AT Protocol",
+      "official_docs": [
+        "https://docs.bsky.app/docs/get-started"
+      ],
+      "auth_model": "AT Protocol session / app password",
+      "account_contexts": [
+        "atproto_actor"
+      ],
+      "implementation_notes": [
+        "Prefer AT Protocol records and XRPC clients over browser scraping.",
+        "Keep record URI/CID identity in normalized metadata."
+      ],
+      "capabilities": {
+        "read_posts": {
+          "status": "available",
+          "gate": "appview/PDS access"
+        },
+        "read_comments": {
+          "status": "available",
+          "gate": "reply graph access"
+        },
+        "read_replies": {
+          "status": "available",
+          "gate": "reply graph access"
+        },
+        "read_public_metrics": {
+          "status": "available",
+          "gate": "likes/reposts/replies exposed by appview"
+        },
+        "read_owned_insights": {
+          "status": "not_publicly_available",
+          "gate": "do not synthesize missing private analytics"
+        },
+        "publish_text": {
+          "status": "available_with_owned_account",
+          "gate": "actor auth"
+        },
+        "publish_media": {
+          "status": "available_with_owned_account",
+          "gate": "blob upload and actor auth"
+        },
+        "reply": {
+          "status": "available_with_owned_account",
+          "gate": "actor auth"
+        },
+        "delete_post": {
+          "status": "available_with_owned_account",
+          "gate": "actor auth"
+        },
+        "search_public_content": {
+          "status": "available",
+          "gate": "appview search availability"
+        },
+        "refresh_snapshots": {
+          "status": "available",
+          "gate": "appview/PDS access"
+        }
+      }
+    },
+    "mastodon": {
+      "display_name": "Mastodon",
+      "official_docs": [
+        "https://docs.joinmastodon.org/api/"
+      ],
+      "auth_model": "Mastodon OAuth per instance",
+      "account_contexts": [
+        "mastodon_account",
+        "mastodon_instance"
+      ],
+      "implementation_notes": [
+        "Instance base URL is part of account context.",
+        "Federation means public visibility and counts may vary by instance."
+      ],
+      "capabilities": {
+        "read_posts": {
+          "status": "available",
+          "gate": "instance API availability"
+        },
+        "read_comments": {
+          "status": "available",
+          "gate": "status context visibility"
+        },
+        "read_replies": {
+          "status": "available",
+          "gate": "status context visibility"
+        },
+        "read_public_metrics": {
+          "status": "available",
+          "gate": "favourites/reblogs/replies exposed by instance"
+        },
+        "read_owned_insights": {
+          "status": "not_publicly_available",
+          "gate": "do not synthesize missing private analytics"
+        },
+        "publish_text": {
+          "status": "available_with_owned_account",
+          "gate": "instance OAuth write scope"
+        },
+        "publish_media": {
+          "status": "available_with_owned_account",
+          "gate": "media upload and write scope"
+        },
+        "reply": {
+          "status": "available_with_owned_account",
+          "gate": "write scope"
+        },
+        "delete_post": {
+          "status": "available_with_owned_account",
+          "gate": "owner auth"
+        },
+        "search_public_content": {
+          "status": "limited",
+          "gate": "instance search behavior"
+        },
+        "refresh_snapshots": {
+          "status": "available",
+          "gate": "instance API availability"
+        }
+      }
+    },
+    "pinterest": {
+      "display_name": "Pinterest",
+      "official_docs": [
+        "https://developers.pinterest.com/docs/api/v5/"
+      ],
+      "auth_model": "Pinterest OAuth / API v5 with user or business access",
+      "account_contexts": [
+        "pinterest_user",
+        "pinterest_business_account"
+      ],
+      "implementation_notes": [
+        "Keep organic Pins/boards separate from ads/business analytics.",
+        "Verify organic and analytics permissions before adapter implementation."
+      ],
+      "capabilities": {
+        "read_posts": {
+          "status": "available_with_owned_account",
+          "gate": "Pin/board access"
+        },
+        "read_comments": {
+          "status": "unknown_verify_before_use",
+          "gate": "verify current API support"
+        },
+        "read_replies": {
+          "status": "unknown_verify_before_use",
+          "gate": "verify current API support"
+        },
+        "read_public_metrics": {
+          "status": "limited",
+          "gate": "fields exposed by API v5"
+        },
+        "read_owned_insights": {
+          "status": "review_gated",
+          "gate": "business account analytics permissions"
+        },
+        "publish_text": {
+          "status": "not_publicly_available",
+          "gate": "Pinterest publishing is Pin/media/link centric"
+        },
+        "publish_media": {
+          "status": "available_with_owned_account",
+          "gate": "Pin creation permissions"
+        },
+        "reply": {
+          "status": "unknown_verify_before_use",
+          "gate": "verify current API support"
+        },
+        "delete_post": {
+          "status": "available_with_owned_account",
+          "gate": "owner authorization"
+        },
+        "search_public_content": {
+          "status": "limited",
+          "gate": "API v5 endpoint availability and app access"
+        },
+        "refresh_snapshots": {
+          "status": "available_with_owned_account",
+          "gate": "Pin/board read access; analytics requires business permission"
+        }
+      }
+    }
+  }
+}
