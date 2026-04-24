@@ -20,8 +20,8 @@ htmlcov/
 .coverage.*
 coverage.xml
 *.cover
-.planning/
-reference/
+.pla*/
+ref*/
 scripts/sync_split.py
 tests_output.txt
 node_modules/
@@ -31,6 +31,8 @@ playwright/.cache/
 .tmp/
 *.log
 AGE*.md
+roa*.md
+ROA*.md
 test_output.txt
 test_auth_out.txt
 connector_state.json*
