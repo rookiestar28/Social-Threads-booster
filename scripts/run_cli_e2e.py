@@ -215,6 +215,24 @@ def run_cli_e2e(output_dir: Path, clean: bool = True) -> None:
     if not isinstance(parse_payload["posts"], list):
         raise E2EFailure("expected parse export output posts to be an array")
 
+    platform_migration_output = output_dir / "social_posts_tracker-e2e.json"
+    result = run_command(
+        "platform tracker migration",
+        [
+            python,
+            "scripts/migrate_platform_tracker.py",
+            "--input",
+            str(tracker),
+            "--output",
+            str(platform_migration_output),
+            "--write",
+        ],
+    )
+    assert_command_ok("platform tracker migration", result)
+    platform_payload = validate_json_file(platform_migration_output, ["schema_version", "tracker_type", "posts"])
+    if platform_payload["schema_version"] != 2 or platform_payload["tracker_type"] != "platform-neutral":
+        raise E2EFailure("expected schema-v2 platform-neutral migration output")
+
     refresh_log = output_dir / "threads_refresh.log"
     result = run_command(
         "headless refresh failure logging",
