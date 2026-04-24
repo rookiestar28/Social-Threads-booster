@@ -1,0 +1,39 @@
+{
+  "reviewed_at": "2026-04-25",
+  "adapter_item": "example-platform-review",
+  "platform": "threads",
+  "official_docs_reviewed": [
+    "https://developers.facebook.com/docs/threads/"
+  ],
+  "capabilities_reviewed": {
+    "read_posts": {
+      "policy_status": "available_with_owned_account",
+      "implementation_decision": "Allowed only through owned-account Threads API access."
+    },
+    "read_owned_insights": {
+      "policy_status": "review_gated",
+      "implementation_decision": "Fail closed unless app review, permissions, and eligible account are documented."
+    },
+    "search_public_content": {
+      "policy_status": "not_publicly_available",
+      "implementation_decision": "Do not implement browser scraping as a fallback."
+    }
+  },
+  "rate_limit_policy": {
+    "decision": "Adapter must centralize retry/backoff and surface rate-limit failures as bounded errors.",
+    "evidence": "Policy matrix marks API operations as gated by official API access; exact limits must be rechecked during adapter implementation."
+  },
+  "data_retention_policy": {
+    "decision": "Store normalized tracker fields and bounded platform metadata only.",
+    "evidence": "No raw private logs, credentials, cookies, or full API responses are required for the example review."
+  },
+  "disallowed_fallbacks": [
+    "No scraping fallback for capabilities marked not_publicly_available.",
+    "No synthetic owned insights when the platform does not expose them.",
+    "No raw token or cookie capture in logs or review evidence."
+  ],
+  "credentialed_smoke": {
+    "decision": "Unavailable for this example.",
+    "evidence": "Example review intentionally contains no credentials or account-specific proof."
+  }
+}
