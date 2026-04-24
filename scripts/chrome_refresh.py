@@ -16,13 +16,6 @@ from typing import Any
 import tracker_utils
 
 
-CHECKPOINT_TARGETS = {
-    "24h": 24.0,
-    "72h": 72.0,
-    "7d": 168.0,
-}
-
-
 class ChromeRefreshError(RuntimeError):
     def __init__(self, reason: str, detail: str):
         super().__init__(f"{reason}: {detail}")
@@ -104,38 +97,8 @@ def normalize_scraped_post(raw: dict, *, existing_post: dict | None = None) -> d
     )
 
 
-def _snapshot_distance(snapshot: dict, target_hours: float) -> float:
-    hours = snapshot.get("hours_since_publish") if isinstance(snapshot, dict) else None
-    if hours is None:
-        return float("inf")
-    return abs(hours - target_hours)
-
-
-def _update_performance_windows(post: dict, snapshot: dict) -> None:
-    performance_windows = post.setdefault("performance_windows", {})
-    for key, target_hours in CHECKPOINT_TARGETS.items():
-        new_distance = _snapshot_distance(snapshot, target_hours)
-        if new_distance == float("inf"):
-            continue
-        if key == "24h" and new_distance > 12:
-            continue
-        if key == "72h" and new_distance > 24:
-            continue
-        if key == "7d" and new_distance > 48:
-            continue
-        current_distance = _snapshot_distance(performance_windows.get(key) or {}, target_hours)
-        if performance_windows.get(key) is None or new_distance < current_distance:
-            performance_windows[key] = snapshot
-
-
 def _append_snapshot(post: dict, captured_at: str) -> None:
-    snapshot = tracker_utils.build_metric_snapshot(post["metrics"], post["created_at"], captured_at=captured_at)
-    snapshots = post.setdefault("snapshots", [])
-    if snapshots and snapshots[-1].get("captured_at") == captured_at:
-        snapshots[-1] = snapshot
-    else:
-        snapshots.append(snapshot)
-    _update_performance_windows(post, snapshot)
+    tracker_utils.append_metric_snapshot(post, post["metrics"], captured_at=captured_at)
 
 
 def _merge_comments(existing: list, incoming: list) -> tuple[list, int]:

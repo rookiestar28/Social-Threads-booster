@@ -190,6 +190,27 @@ class TrackerUtilsTests(unittest.TestCase):
             if case_dir.exists():
                 shutil.rmtree(case_dir)
 
+    def test_append_metric_snapshot_updates_checkpoint_window(self) -> None:
+        tracker_utils = load_module()
+        post = tracker_utils.build_post_record(
+            post_id="post-1",
+            text="Post",
+            created_at="2026-04-20T10:00:00+00:00",
+            source_path="api",
+            data_completeness="full",
+            metrics={"views": 10},
+        )
+
+        snapshot = tracker_utils.append_metric_snapshot(
+            post,
+            {"views": 20, "likes": 2, "replies": 1, "reposts": 0, "quotes": 0, "shares": 0},
+            captured_at="2026-04-21T10:00:00+00:00",
+        )
+
+        self.assertEqual(len(post["snapshots"]), 1)
+        self.assertEqual(snapshot["hours_since_publish"], 24.0)
+        self.assertEqual(post["performance_windows"]["24h"]["views"], 20)
+
 
 if __name__ == "__main__":
     unittest.main()

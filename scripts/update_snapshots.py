@@ -41,6 +41,7 @@ except ImportError as exc:
     sys.exit(1)
 
 from tracker_utils import (
+    append_metric_snapshot,
     backup_tracker,
     build_metric_snapshot,
     build_post_record,
@@ -56,13 +57,6 @@ from refresh_logging import (
     build_refresh_success_entry,
 )
 from credential_sources import CredentialSourceError, resolve_credential
-
-CHECKPOINT_TARGETS = {
-    "24h": 24.0,
-    "72h": 72.0,
-    "7d": 168.0,
-}
-
 
 class RefreshRunError(Exception):
     def __init__(self, reason: str, detail: str, exit_code: int = 1):
@@ -153,51 +147,6 @@ def select_posts(posts: list, post_ids: list[str], recent: int, update_all: bool
     return posts[:recent]
 
 
-def snapshot_distance(snapshot: dict, target_hours: float) -> float:
-    """Distance from a snapshot to a checkpoint target."""
-    hours = snapshot.get("hours_since_publish")
-    if hours is None:
-        return float("inf")
-    return abs(hours - target_hours)
-
-
-def update_performance_windows(post: dict, snapshot: dict) -> None:
-    """Update checkpoint windows if the new snapshot is a better fit."""
-    performance_windows = post.setdefault("performance_windows", {})
-
-    for key, target_hours in CHECKPOINT_TARGETS.items():
-        current = performance_windows.get(key)
-        new_distance = snapshot_distance(snapshot, target_hours)
-        if new_distance == float("inf"):
-            continue
-
-        # Accept snapshots within a reasonable range around the checkpoint.
-        if key == "24h" and new_distance > 12:
-            continue
-        if key == "72h" and new_distance > 24:
-            continue
-        if key == "7d" and new_distance > 48:
-            continue
-
-        current_distance = snapshot_distance(current or {}, target_hours)
-        if current is None or new_distance < current_distance:
-            performance_windows[key] = snapshot
-
-
-def append_snapshot(post: dict, snapshot: dict) -> None:
-    """Append or replace the latest snapshot if the run is too close to the previous one."""
-    snapshots = post.setdefault("snapshots", [])
-    if snapshots:
-        last = snapshots[-1]
-        last_captured_at = last.get("captured_at")
-        current_captured_at = snapshot.get("captured_at")
-        if last_captured_at == current_captured_at:
-            snapshots[-1] = snapshot
-            return
-
-    snapshots.append(snapshot)
-
-
 def merge_comments(existing: list, incoming: list) -> tuple[list, int]:
     known = {
         (
@@ -242,11 +191,7 @@ def refresh_post(post: dict, token: str, update_comments: bool) -> int:
         "shares": post.get("metrics", {}).get("shares", 0),
     }
     captured_at = utc_now_iso()
-    snapshot = build_metric_snapshot(snapshot_metrics, created_at, captured_at=captured_at)
-
-    post["metrics"] = snapshot_metrics
-    append_snapshot(post, snapshot)
-    update_performance_windows(post, snapshot)
+    append_metric_snapshot(post, snapshot_metrics, captured_at=captured_at)
 
     replies_added = 0
     if update_comments:
