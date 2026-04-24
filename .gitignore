@@ -22,6 +22,7 @@ coverage.xml
 *.cover
 .pla*/
 ref*/
+.ref*/
 scripts/sync_split.py
 tests_output.txt
 node_modules/

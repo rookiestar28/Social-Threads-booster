@@ -27,12 +27,13 @@ Required minimum gate:
 
 1. `pre-commit run detect-secrets --all-files` when `pre-commit` is available
 2. `pre-commit run --all-files --show-diff-on-failure` when `pre-commit` is available
-3. `python -m unittest discover -s tests -p "test_*.py"`
-4. Targeted CLI E2E per `tests/E2E_TESTING_SOP.md` for every touched deterministic script
+3. `python scripts/check_internal_guardrails.py`
+4. `python -m unittest discover -s tests -p "test_*.py"`
+5. Targeted CLI E2E per `tests/E2E_TESTING_SOP.md` for every touched deterministic script
 
 Additional gate when credential-dependent scripts are touched:
 
-5. Record one of:
+6. Record one of:
    - a targeted manual smoke run with valid credentials, or
    - an explicit verification note that secrets/tokens were unavailable and only deterministic coverage was possible
 
@@ -93,19 +94,25 @@ pre-commit run --all-files --show-diff-on-failure
 
 Important: if hooks auto-fix files, review/stage/commit those changes, then rerun until clean.
 
-3. Run Python regression tests:
+3. Run the internal-file guardrail check:
+
+```bash
+python scripts/check_internal_guardrails.py
+```
+
+4. Run Python regression tests:
 
 ```bash
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-4. Run targeted CLI E2E for changed deterministic scripts:
+5. Run targeted CLI E2E for changed deterministic scripts:
 
 ```bash
 # Follow the commands in tests/E2E_TESTING_SOP.md
 ```
 
-5. If credential-dependent scripts were touched, record one of:
+6. If credential-dependent scripts were touched, record one of:
 
 - a manual smoke command and result, or
 - a clear statement that credentials were unavailable
