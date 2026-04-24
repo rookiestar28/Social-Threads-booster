@@ -54,8 +54,17 @@ Search the user's working directory for:
 - `style_guide.md`
 - `concept_library.md`
 - `brand_voice.md` if available
+- optional `social_booster_config.json`
 
 Use all available files. If `brand_voice.md` exists, use it **for observation only** — to notice where the submitted post drifts from the user's own historical voice. Never use it to rewrite or pull the submission toward a brand_voice template. The heavy composition application of `brand_voice.md` belongs to `/draft`, not here.
+
+If `social_booster_config.json` exists, read `workflows.analyze.discussion_mode` using the same values validated by `scripts/workflow_preferences.py`:
+
+- `fast`: return the decision-first analysis directly.
+- `discussion`: ask clarifying questions before analysis only when the post, target audience, or desired decision is materially ambiguous.
+- `auto`: analyze directly unless missing context would change the recommendation.
+
+`/analyze` is read-only for runtime preferences. Do not persist preference changes from this workflow.
 
 Load `knowledge/user-fact-source-of-truth.md` when the submitted post contains or implies personal facts. If a statement conflicts with the user's own history, flag the exact local issue and ask for confirmation. Do not rewrite the user's biography, chronology, work history, or lived experience into a cleaner story.
 

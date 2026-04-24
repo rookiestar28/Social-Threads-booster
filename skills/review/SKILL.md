@@ -27,8 +27,19 @@ Search for:
 - `threads_daily_tracker.json`
 - `style_guide.md`
 - `concept_library.md`
+- optional `social_booster_config.json`
 
 If the tracker is missing, tell the user to supply historical data or run `/setup` first.
+
+### Runtime Preferences
+
+If `social_booster_config.json` exists, read `workflows.review.discussion_mode` using the same values validated by `scripts/workflow_preferences.py`:
+
+- `fast`: use available tracker/checkpoint data and proceed without optional clarification.
+- `discussion`: ask before discarding expired prediction placeholders, changing ambiguous metrics, or interpreting unclear deviation causes.
+- `auto`: proceed directly except when an irreversible or ambiguous update would be made.
+
+`/review` is read-only for runtime preferences. Do not persist preference changes from this workflow.
 
 ---
 

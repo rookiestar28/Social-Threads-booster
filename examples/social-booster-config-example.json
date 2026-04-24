@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "workflows": {
+    "draft": {
+      "discussion_mode": "discussion",
+      "research_angle_expansion": true
+    },
+    "analyze": {
+      "discussion_mode": "fast"
+    },
+    "review": {
+      "discussion_mode": "auto"
+    }
+  },
+  "platforms": {
+    "threads": {
+      "content_profile": "default"
+    }
+  }
+}

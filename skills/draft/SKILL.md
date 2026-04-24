@@ -42,9 +42,27 @@ Search the working directory for:
 - `brand_voice.md`
 - `threads_daily_tracker.json`
 - `concept_library.md`
+- optional `social_booster_config.json`
 - optional topic bank files found via `*topic*` or `*idea*`
 
 If `style_guide.md` is missing, remind the user to run `/setup` first.
+
+### Runtime Preferences
+
+If `social_booster_config.json` exists, treat it as the platform-neutral runtime preference source. It follows the shape validated by `scripts/workflow_preferences.py`.
+
+For `/draft`, read:
+
+- `workflows.draft.discussion_mode`: `fast`, `discussion`, or `auto`
+- `workflows.draft.research_angle_expansion`: boolean
+
+Behavior:
+
+- `fast`: proceed with minimal clarification unless a safety, source, or personal-fact conflict requires the user.
+- `discussion`: pause at topic, freshness, research-angle, and personal-fact decision points before drafting.
+- `auto`: use fast mode by default, but switch to discussion when the topic is ambiguous, freshness is yellow/red, personal facts conflict, or source confidence is weak.
+
+Only persist preference changes when the user explicitly asks to update preferences. Never store credentials, cookies, tokens, private URLs, or private account details in this config.
 
 ---
 

@@ -38,6 +38,7 @@ test_output.txt
 test_auth_out.txt
 connector_state.json*
 platform_accounts.local.json
+social_booster_config.json
 .DS_Store
 .vscode/
 .idea/
