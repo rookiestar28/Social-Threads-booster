@@ -1,6 +1,8 @@
 import importlib.util
+import json
 import shutil
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -152,6 +154,38 @@ class TrackerUtilsTests(unittest.TestCase):
             with self.assertRaises(tracker_utils.TrackerValidationError):
                 tracker_utils.save_tracker(tracker_path, invalid_tracker)
             self.assertFalse(tracker_path.exists())
+        finally:
+            if case_dir.exists():
+                shutil.rmtree(case_dir)
+
+    def test_save_tracker_preserves_existing_file_when_atomic_replace_fails(self) -> None:
+        tracker_utils = load_module()
+        case_dir = TMP_DIR / "tracker-utils-atomic"
+        tracker_path = case_dir / "threads_daily_tracker.json"
+        original_tracker = tracker_utils.build_empty_tracker(
+            account_handle="@old",
+            source="api",
+            posts=[],
+            last_updated="2026-04-20T10:00:00+00:00",
+        )
+        new_tracker = tracker_utils.build_empty_tracker(
+            account_handle="@new",
+            source="api",
+            posts=[],
+            last_updated="2026-04-21T10:00:00+00:00",
+        )
+
+        try:
+            case_dir.mkdir(parents=True, exist_ok=True)
+            tracker_path.write_text(json.dumps(original_tracker, ensure_ascii=False, indent=2), encoding="utf-8")
+
+            with mock.patch.object(tracker_utils.os, "replace", side_effect=OSError("replace failed")):
+                with self.assertRaisesRegex(OSError, "replace failed"):
+                    tracker_utils.save_tracker(tracker_path, new_tracker)
+
+            persisted = json.loads(tracker_path.read_text(encoding="utf-8"))
+            self.assertEqual(persisted["account"]["handle"], "@old")
+            self.assertEqual(list(case_dir.glob("threads_daily_tracker.json.tmp-*")), [])
         finally:
             if case_dir.exists():
                 shutil.rmtree(case_dir)

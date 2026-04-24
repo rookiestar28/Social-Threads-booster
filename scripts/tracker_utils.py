@@ -6,7 +6,9 @@ Shared tracker IO, scaffold, and mutation utilities for AK-Threads-Booster.
 from __future__ import annotations
 
 import json
+import os
 import shutil
+import uuid
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
@@ -417,7 +419,16 @@ def save_tracker(path: str | Path, tracker: dict) -> Path:
     validate_tracker(tracker)
     tracker_path = Path(path)
     tracker_path.parent.mkdir(parents=True, exist_ok=True)
-    tracker_path.write_text(json.dumps(tracker, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp_path = tracker_path.with_name(f"{tracker_path.name}.tmp-{os.getpid()}-{uuid.uuid4().hex}")
+    try:
+        tmp_path.write_text(json.dumps(tracker, ensure_ascii=False, indent=2), encoding="utf-8")
+        os.replace(tmp_path, tracker_path)
+    except Exception:
+        try:
+            if tmp_path.exists():
+                tmp_path.unlink()
+        finally:
+            raise
     return tracker_path
 
 
