@@ -214,6 +214,15 @@ If more than 30% of recent runs are degraded, flag it: "Freshness check has been
 
 If the current post under review has no matching freshness-check entry at all, flag it and note that the post was drafted without the gate — any underperformance may trace to a missed saturation signal.
 
+If draft entries include decision audit fields, summarize only availability and tag counts:
+
+- `discussion_mode`
+- `discussion_ran`
+- `user_decisions`
+- `personal_fact_conflicts`
+
+Treat these as advisory context, not proof of causality. Never expand a tag into private facts or infer the correct personal fact from the log.
+
 Do not block the review; just surface the pattern in the final report.
 
 ### Personal-Fact Conflict Context

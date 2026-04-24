@@ -143,6 +143,18 @@ Every `/draft` run must append one JSON line to `threads_freshness.log`:
 
 Do not fake `performed` when search did not actually run.
 
+When discussion mode or explicit user decisions affect the draft, include bounded tag-only audit fields:
+
+```json
+{"discussion_mode":"fast|discussion|auto","discussion_ran":true,"user_decisions":["accepted_yellow_reframe"],"personal_fact_conflicts":["needs_confirmation"]}
+```
+
+Rules:
+
+- Use short non-sensitive tags only.
+- Do not log full draft text, private URLs, credentials, private source excerpts, or sensitive personal facts.
+- For personal-fact conflicts, log the conflict category only, such as `needs_confirmation` or `conflicting_user_sources`.
+
 ### Step 3: Research and Fact-Check
 
 #### 3a. Local Research

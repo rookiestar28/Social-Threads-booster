@@ -63,6 +63,44 @@ class ReviewLogHealthTests(unittest.TestCase):
         self.assertEqual(summary["healthy_runs"], 1)
         self.assertEqual(summary["degraded_runs"], 1)
         self.assertTrue(summary["current_topic_seen"])
+        self.assertEqual(summary["draft_decision_runs"], 0)
+
+    def test_summarizes_draft_decision_audit_evidence(self) -> None:
+        review_log_health = load_module()
+
+        entries = [
+            {
+                "ts": "2026-04-21T10:00:00+00:00",
+                "run_id": "run-a",
+                "skill": "draft",
+                "topic": "seo-recovery-playbook",
+                "status": "performed",
+                "decision": "green",
+                "discussion_mode": "discussion",
+                "discussion_ran": True,
+                "user_decisions": ["accepted_yellow_reframe", "dropped_unverified_claim"],
+                "personal_fact_conflicts": ["needs_confirmation"],
+            },
+            {
+                "ts": "2026-04-21T10:05:00+00:00",
+                "run_id": "run-b",
+                "skill": "draft",
+                "topic": "technical-seo-checklist",
+                "status": "performed",
+                "decision": "green",
+                "discussion_mode": "fast",
+                "discussion_ran": False,
+                "user_decisions": ["kept_original_hook"],
+            },
+        ]
+
+        summary = review_log_health.summarize_freshness_log(entries)
+
+        self.assertEqual(summary["draft_decision_runs"], 2)
+        self.assertEqual(summary["discussion_runs"], 1)
+        self.assertEqual(summary["personal_fact_conflict_runs"], 1)
+        self.assertEqual(summary["user_decision_counts"]["accepted_yellow_reframe"], 1)
+        self.assertEqual(summary["user_decision_counts"]["kept_original_hook"], 1)
 
     def test_cli_summarizes_refresh_and_freshness_logs(self) -> None:
         case_dir = TMP_DIR / f"review-log-health-{uuid.uuid4().hex}"

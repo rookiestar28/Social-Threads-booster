@@ -91,6 +91,71 @@ class FreshnessLoggingTests(unittest.TestCase):
             if case_dir.exists():
                 shutil.rmtree(case_dir)
 
+    def test_build_draft_entry_accepts_bounded_decision_audit_fields(self) -> None:
+        freshness_logging = load_module()
+
+        entry = freshness_logging.build_draft_freshness_entry(
+            topic="seo-recovery-playbook",
+            status="performed",
+            decision="green",
+            web_search_query="seo recovery playbook 2026",
+            run_id="run-123",
+            discussion_mode="discussion",
+            discussion_ran=True,
+            user_decisions=["accepted_yellow_reframe", "dropped_unverified_claim"],
+            personal_fact_conflicts=["needs_confirmation"],
+        )
+
+        self.assertEqual(entry["discussion_mode"], "discussion")
+        self.assertTrue(entry["discussion_ran"])
+        self.assertEqual(entry["user_decisions"], ["accepted_yellow_reframe", "dropped_unverified_claim"])
+        self.assertEqual(entry["personal_fact_conflicts"], ["needs_confirmation"])
+
+    def test_cli_appends_draft_decision_audit_fields(self) -> None:
+        case_dir = TMP_DIR / f"freshness-log-{uuid.uuid4().hex}"
+        log_path = case_dir / "threads_freshness.log"
+
+        try:
+            case_dir.mkdir(parents=True, exist_ok=True)
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(SCRIPT_PATH),
+                    "--skill",
+                    "draft",
+                    "--target",
+                    "seo-recovery-playbook",
+                    "--status",
+                    "performed",
+                    "--outcome",
+                    "green",
+                    "--web-search-query",
+                    "seo recovery playbook 2026",
+                    "--discussion-mode",
+                    "discussion",
+                    "--discussion-ran",
+                    "--user-decision",
+                    "accepted_yellow_reframe",
+                    "--personal-fact-conflict",
+                    "needs_confirmation",
+                    "--log-file",
+                    str(log_path),
+                ],
+                capture_output=True,
+                text=True,
+                cwd=REPO_ROOT,
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr or result.stdout)
+            entry = json.loads(log_path.read_text(encoding="utf-8").strip())
+            self.assertEqual(entry["discussion_mode"], "discussion")
+            self.assertTrue(entry["discussion_ran"])
+            self.assertEqual(entry["user_decisions"], ["accepted_yellow_reframe"])
+            self.assertEqual(entry["personal_fact_conflicts"], ["needs_confirmation"])
+        finally:
+            if case_dir.exists():
+                shutil.rmtree(case_dir)
+
 
 if __name__ == "__main__":
     unittest.main()

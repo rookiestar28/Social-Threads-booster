@@ -64,6 +64,10 @@ def summarize_freshness_log(
     healthy_runs = 0
     degraded_runs = 0
     current_topic_seen = False
+    draft_decision_runs = 0
+    discussion_runs = 0
+    personal_fact_conflict_runs = 0
+    user_decision_counts: Counter[str] = Counter()
 
     for run_entries in grouped.values():
         statuses = {str(entry.get("status") or "") for entry in run_entries}
@@ -78,6 +82,30 @@ def summarize_freshness_log(
                     current_topic_seen = True
                     break
 
+        draft_entries = [entry for entry in run_entries if entry.get("skill") == "draft"]
+        has_decision_evidence = False
+        has_personal_fact_conflict = False
+        has_discussion = False
+        for entry in draft_entries:
+            if entry.get("discussion_mode") is not None or entry.get("discussion_ran") is not None:
+                has_decision_evidence = True
+            if bool(entry.get("discussion_ran")) is True:
+                has_discussion = True
+            decisions = entry.get("user_decisions") or []
+            if isinstance(decisions, list) and decisions:
+                has_decision_evidence = True
+                user_decision_counts.update(str(item) for item in decisions if str(item).strip())
+            conflicts = entry.get("personal_fact_conflicts") or []
+            if isinstance(conflicts, list) and conflicts:
+                has_decision_evidence = True
+                has_personal_fact_conflict = True
+        if has_decision_evidence:
+            draft_decision_runs += 1
+        if has_discussion:
+            discussion_runs += 1
+        if has_personal_fact_conflict:
+            personal_fact_conflict_runs += 1
+
     total_runs = len(grouped)
     degraded_ratio = (degraded_runs / total_runs) if total_runs else 0.0
 
@@ -88,6 +116,10 @@ def summarize_freshness_log(
         "degraded_ratio": round(degraded_ratio, 4),
         "degraded_warning": degraded_ratio > 0.3,
         "current_topic_seen": current_topic_seen,
+        "draft_decision_runs": draft_decision_runs,
+        "discussion_runs": discussion_runs,
+        "personal_fact_conflict_runs": personal_fact_conflict_runs,
+        "user_decision_counts": dict(user_decision_counts.most_common()),
     }
 
 
