@@ -252,14 +252,14 @@ After setup, the working directory usually contains:
 ### Claude Code plugin install
 
 ```bash
-claude install-plugin https://github.com/akseolabs-seo/Social-Threads-Booster
+claude install-plugin https://github.com/rookiestar28/Social-Threads-booster
 ```
 
 ### Manual install
 
 ```bash
-git clone https://github.com/akseolabs-seo/Social-Threads-Booster.git
-cd Social-Threads-Booster
+git clone https://github.com/rookiestar28/Social-Threads-booster.git
+cd Social-Threads-booster
 python -m pip install -r scripts/requirements.txt
 ```
 

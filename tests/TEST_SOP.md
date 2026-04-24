@@ -1,6 +1,6 @@
-# AK-Threads-Booster Test SOP
+# Social-Threads-Booster Test SOP
 
-This document is the source-of-truth local verification workflow for **AK-Threads-Booster**.
+This document is the source-of-truth local verification workflow for **Social-Threads-Booster**.
 Use it before push and before marking any implementation as accepted.
 
 ## Scope

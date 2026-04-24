@@ -1,12 +1,12 @@
 {
-  "name": "ak-threads-booster",
-  "description": "AK體：數據驅動的社交媒體寫文顧問系統。基於歷史數據、社交媒體心理學、Meta演算法機制，為你的 Threads 帳號提供個人化的寫文分析與建議。",
+  "name": "social-threads-booster",
+  "description": "Social-Threads-Booster is a local, data-centered skill and scripting toolkit for making better Threads content decisions from a creator's own history.",
   "version": "1.0.0",
   "author": {
-    "name": "AK SEO Labs",
-    "url": "https://threads.net/@darkseoking"
+    "name": "Social-Threads-Booster maintainers",
+    "url": "https://github.com/rookiestar28/Social-Threads-booster"
   },
-  "homepage": "https://github.com/akseolabs-seo/AK-Threads-booster",
-  "repository": "https://github.com/akseolabs-seo/AK-Threads-booster",
+  "homepage": "https://github.com/rookiestar28/Social-Threads-booster",
+  "repository": "https://github.com/rookiestar28/Social-Threads-booster",
   "license": "MIT"
 }

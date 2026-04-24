@@ -1,6 +1,6 @@
-# AK-Threads-Booster E2E Testing SOP
+# Social-Threads-Booster E2E Testing SOP
 
-This SOP defines the repeatable end-to-end validation flow for **AK-Threads-Booster**.
+This SOP defines the repeatable end-to-end validation flow for **Social-Threads-Booster**.
 
 ## What Counts As E2E In This Repo
 

@@ -1,4 +1,4 @@
-# AK-Threads-Booster E2E Notice
+# Social-Threads-Booster E2E Notice
 
 All E2E validation for this repository must follow `tests/E2E_TESTING_SOP.md`.
 
