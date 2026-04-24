@@ -76,15 +76,25 @@ Walk the user through each step. Do not assume any prior Meta developer experien
 
 *A.5 (Optional but recommended) Exchange for a long-lived token*
 
-Long-lived tokens last 60 days and can be refreshed. To exchange, the user needs the **App Secret** from **App settings → Basic**. The `fetch_threads.py` script will perform the exchange when `--app-secret` is passed.
+Long-lived tokens last 60 days and can be refreshed. To exchange, the user needs the **App Secret** from **App settings → Basic**. The `fetch_threads.py` script will perform the exchange when `THREADS_APP_SECRET`, `--app-secret-file`, or the compatibility-only `--app-secret` path is provided.
+
+Security note: prefer environment variables or token files. Avoid pasting live tokens into command-line arguments because they can leak through shell history or process listings.
 
 *A.6 Run the fetch script*
 
 ```bash
 # Run from the AK-Threads-Booster directory (where scripts/ lives)
+THREADS_API_TOKEN="USER_TOKEN" \
+THREADS_APP_SECRET="APP_SECRET_OPTIONAL" \
+python scripts/fetch_threads.py --output "<user-working-dir>/threads_daily_tracker.json"
+```
+
+Token-file alternative:
+
+```bash
 python scripts/fetch_threads.py \
-  --token USER_TOKEN \
-  --app-secret APP_SECRET_OPTIONAL \
+  --token-file .secrets/threads_token.txt \
+  --app-secret-file .secrets/threads_app_secret.txt \
   --output "<user-working-dir>/threads_daily_tracker.json"
 ```
 

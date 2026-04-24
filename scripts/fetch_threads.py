@@ -3,7 +3,9 @@
 AK-Threads-Booster: Fetch historical posts via Meta Threads API.
 
 Usage:
-    python fetch_threads.py --token YOUR_ACCESS_TOKEN [--output threads_daily_tracker.json]
+    $env:THREADS_API_TOKEN="..."
+    python fetch_threads.py [--output threads_daily_tracker.json]
+    python fetch_threads.py --token-file .secrets/threads_token.txt [--output threads_daily_tracker.json]
 
 Prerequisites:
     1. Create a Meta Developer App at https://developers.facebook.com/
@@ -16,7 +18,7 @@ The script will:
     - Fetch all your historical Threads posts
     - Fetch metrics (views, likes, replies, reposts, quotes) for each post
     - Fetch reply threads (comments) for each post
-    - Output a tracker JSON file in AK-Threads-Booster standard format
+    - Output a tracker JSON file in Social-Threads-Booster standard format
 """
 
 import argparse
@@ -41,6 +43,7 @@ from tracker_utils import (
     save_tracker,
     sort_posts_newest_first,
 )
+from credential_sources import CredentialSourceError, resolve_credential
 
 try:
     import requests
@@ -286,11 +289,24 @@ def main():
         description="Fetch Threads historical posts via Meta Threads API"
     )
     parser.add_argument(
-        "--token", required=True, help="Threads API access token"
+        "--token",
+        default=None,
+        help="Threads API access token. Prefer $THREADS_API_TOKEN or --token-file.",
+    )
+    parser.add_argument(
+        "--token-file",
+        default=None,
+        help="Path to a file containing the Threads API access token.",
     )
     parser.add_argument(
         "--app-secret",
-        help="App secret for long-lived token exchange (optional)",
+        default=None,
+        help="App secret for long-lived token exchange. Prefer $THREADS_APP_SECRET or --app-secret-file.",
+    )
+    parser.add_argument(
+        "--app-secret-file",
+        default=None,
+        help="Path to a file containing the app secret for long-lived token exchange.",
     )
     parser.add_argument(
         "--output",
@@ -299,12 +315,39 @@ def main():
     )
     args = parser.parse_args()
 
-    token = args.token
+    try:
+        token_source = resolve_credential(
+            label="Threads API token",
+            direct_value=args.token,
+            direct_source_name="--token",
+            env_var="THREADS_API_TOKEN",
+            file_path=args.token_file,
+        )
+        app_secret_source = resolve_credential(
+            label="Threads app secret",
+            direct_value=args.app_secret,
+            direct_source_name="--app-secret",
+            env_var="THREADS_APP_SECRET",
+            file_path=args.app_secret_file,
+        )
+    except CredentialSourceError as exc:
+        print(f"Error: {exc}")
+        sys.exit(1)
+
+    if token_source.warning:
+        print(token_source.warning, file=sys.stderr)
+    if app_secret_source.warning:
+        print(app_secret_source.warning, file=sys.stderr)
+    if not token_source.value:
+        print("Error: no API token. Set $THREADS_API_TOKEN, pass --token-file, or use --token.")
+        sys.exit(1)
+
+    token = token_source.value
 
     # Exchange for long-lived token if app secret provided
-    if args.app_secret:
+    if app_secret_source.value:
         print("[1/4] Exchanging for long-lived token...")
-        token = exchange_long_lived_token(token, args.app_secret)
+        token = exchange_long_lived_token(token, app_secret_source.value)
     else:
         print("[1/4] Using provided token (skip long-lived exchange)")
 

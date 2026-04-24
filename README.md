@@ -120,7 +120,7 @@ Supported input paths include:
 Primary scripts:
 
 ```bash
-python scripts/fetch_threads.py --token YOUR_THREADS_TOKEN --output threads_daily_tracker.json
+THREADS_API_TOKEN="..." python scripts/fetch_threads.py --output threads_daily_tracker.json
 python scripts/parse_export.py --input META_EXPORT_PATH --output threads_daily_tracker.json
 python scripts/run_setup_artifacts.py --tracker threads_daily_tracker.json --output-dir .
 ```

@@ -3,9 +3,10 @@
 AK-Threads-Booster: Refresh tracker metrics and append API-backed snapshots.
 
 Usage:
-    python update_snapshots.py --token YOUR_ACCESS_TOKEN [--tracker threads_daily_tracker.json]
-    python update_snapshots.py --token YOUR_ACCESS_TOKEN --post-id 12345
-    python update_snapshots.py --token YOUR_ACCESS_TOKEN --recent 5 --update-comments
+    $env:THREADS_API_TOKEN="..."
+    python update_snapshots.py [--tracker threads_daily_tracker.json]
+    python update_snapshots.py --token-file .secrets/threads_token.txt --post-id 12345
+    python update_snapshots.py --token-file .secrets/threads_token.txt --recent 5 --update-comments
     python update_snapshots.py --include-new-posts --update-comments --backup  # full daily refresh (token from $THREADS_API_TOKEN)
 
 The script:
@@ -16,13 +17,12 @@ The script:
     - Optionally pulls in any new posts that aren't yet tracked (--include-new-posts)
     - Optionally backs up the tracker to `.bak-<ISO>` before writing (--backup)
 
-The token can be passed via --token or the environment variable THREADS_API_TOKEN.
-Env-var fallback is preferred for scheduled daily runs so the token isn't visible
-in the process listing.
+The token can be supplied with THREADS_API_TOKEN or --token-file.
+Direct --token remains available for compatibility, but is discouraged because
+command-line secrets can appear in shell history or process listings.
 """
 
 import argparse
-import os
 import sys
 import time
 from pathlib import Path
@@ -55,6 +55,7 @@ from refresh_logging import (
     build_refresh_failure_entry,
     build_refresh_success_entry,
 )
+from credential_sources import CredentialSourceError, resolve_credential
 
 CHECKPOINT_TARGETS = {
     "24h": 24.0,
@@ -273,13 +274,35 @@ def resolve_log_path(tracker_path: str, explicit_log_path: str | None) -> Path:
 
 
 def run_refresh(args: argparse.Namespace) -> dict:
-    if not args.token:
-        raise RefreshRunError("other", "no API token. Pass --token or set $THREADS_API_TOKEN.")
+    try:
+        token_source = resolve_credential(
+            label="Threads API token",
+            direct_value=args.token,
+            direct_source_name="--token",
+            env_var="THREADS_API_TOKEN",
+            file_path=args.token_file,
+        )
+        app_secret_source = resolve_credential(
+            label="Threads app secret",
+            direct_value=args.app_secret,
+            direct_source_name="--app-secret",
+            env_var="THREADS_APP_SECRET",
+            file_path=args.app_secret_file,
+        )
+    except CredentialSourceError as exc:
+        raise RefreshRunError("other", str(exc)) from exc
 
-    token = args.token
-    if args.app_secret:
+    if token_source.warning:
+        print(token_source.warning, file=sys.stderr)
+    if app_secret_source.warning:
+        print(app_secret_source.warning, file=sys.stderr)
+    if not token_source.value:
+        raise RefreshRunError("other", "no API token. Set $THREADS_API_TOKEN, pass --token-file, or use --token.")
+
+    token = token_source.value
+    if app_secret_source.value:
         print("[1/4] Exchanging for long-lived token...")
-        token = exchange_long_lived_token(token, args.app_secret)
+        token = exchange_long_lived_token(token, app_secret_source.value)
     else:
         print("[1/4] Using provided token (skip long-lived exchange)")
 
@@ -348,13 +371,23 @@ def main() -> None:
     )
     parser.add_argument(
         "--token",
-        default=os.environ.get("THREADS_API_TOKEN"),
-        help="Threads API access token (defaults to $THREADS_API_TOKEN)",
+        default=None,
+        help="Threads API access token. Prefer $THREADS_API_TOKEN or --token-file.",
+    )
+    parser.add_argument(
+        "--token-file",
+        default=None,
+        help="Path to a file containing the Threads API access token.",
     )
     parser.add_argument(
         "--app-secret",
-        default=os.environ.get("THREADS_APP_SECRET"),
-        help="App secret for long-lived token exchange (optional; $THREADS_APP_SECRET)",
+        default=None,
+        help="App secret for long-lived token exchange. Prefer $THREADS_APP_SECRET or --app-secret-file.",
+    )
+    parser.add_argument(
+        "--app-secret-file",
+        default=None,
+        help="Path to a file containing the app secret for long-lived token exchange.",
     )
     parser.add_argument(
         "--tracker",
