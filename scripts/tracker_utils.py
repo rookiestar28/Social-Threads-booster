@@ -13,6 +13,10 @@ from pathlib import Path
 from typing import Any, Optional
 
 
+class TrackerValidationError(ValueError):
+    """Raised when a tracker fails required shape validation."""
+
+
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -339,7 +343,78 @@ def load_tracker(path: str | Path) -> dict:
     return tracker
 
 
+def _require_type(value: Any, expected_type: type | tuple[type, ...], path: str) -> None:
+    if not isinstance(value, expected_type):
+        if isinstance(expected_type, tuple):
+            expected = " or ".join(t.__name__ for t in expected_type)
+        else:
+            expected = expected_type.__name__
+        raise TrackerValidationError(f"{path} must be {expected}")
+
+
+def _require_non_empty_string(value: Any, path: str) -> None:
+    if not isinstance(value, str) or not value.strip():
+        raise TrackerValidationError(f"{path} must be a non-empty string")
+
+
+def _validate_metrics(metrics: Any, path: str) -> None:
+    _require_type(metrics, dict, path)
+    for key in ("views", "likes", "replies", "reposts", "quotes", "shares"):
+        if key not in metrics:
+            raise TrackerValidationError(f"{path}.{key} is required")
+        if not isinstance(metrics[key], (int, float)) or isinstance(metrics[key], bool):
+            raise TrackerValidationError(f"{path}.{key} must be numeric")
+
+
+def _validate_snapshot(snapshot: Any, path: str) -> None:
+    _require_type(snapshot, dict, path)
+    _require_non_empty_string(snapshot.get("captured_at"), f"{path}.captured_at")
+    for key in ("views", "likes", "replies", "reposts", "quotes", "shares"):
+        if key not in snapshot:
+            raise TrackerValidationError(f"{path}.{key} is required")
+        if not isinstance(snapshot[key], (int, float)) or isinstance(snapshot[key], bool):
+            raise TrackerValidationError(f"{path}.{key} must be numeric")
+    if "hours_since_publish" in snapshot and snapshot["hours_since_publish"] is not None:
+        if not isinstance(snapshot["hours_since_publish"], (int, float)) or isinstance(snapshot["hours_since_publish"], bool):
+            raise TrackerValidationError(f"{path}.hours_since_publish must be numeric or null")
+
+
+def _validate_post(post: Any, path: str) -> None:
+    _require_type(post, dict, path)
+    _require_non_empty_string(post.get("id"), f"{path}.id")
+    _require_type(post.get("text"), str, f"{path}.text")
+    _require_type(post.get("created_at"), str, f"{path}.created_at")
+    _require_type(post.get("topics"), list, f"{path}.topics")
+    _require_type(post.get("comments"), list, f"{path}.comments")
+    _require_type(post.get("snapshots"), list, f"{path}.snapshots")
+    _require_type(post.get("performance_windows"), dict, f"{path}.performance_windows")
+    _require_type(post.get("source"), dict, f"{path}.source")
+    _require_non_empty_string(post["source"].get("import_path"), f"{path}.source.import_path")
+    _require_non_empty_string(post["source"].get("data_completeness"), f"{path}.source.data_completeness")
+
+    _validate_metrics(post.get("metrics"), f"{path}.metrics")
+    for index, comment in enumerate(post.get("comments") or []):
+        _require_type(comment, dict, f"{path}.comments[{index}]")
+    for index, snapshot in enumerate(post.get("snapshots") or []):
+        _validate_snapshot(snapshot, f"{path}.snapshots[{index}]")
+
+    prediction_snapshot = post.get("prediction_snapshot")
+    if prediction_snapshot is not None:
+        _require_type(prediction_snapshot, dict, f"{path}.prediction_snapshot")
+
+
+def validate_tracker(tracker: Any) -> None:
+    _require_type(tracker, dict, "tracker")
+    _require_type(tracker.get("account"), dict, "tracker.account")
+    _require_type(tracker.get("posts"), list, "tracker.posts")
+    _require_type(tracker.get("last_updated"), str, "tracker.last_updated")
+
+    for index, post in enumerate(tracker.get("posts") or []):
+        _validate_post(post, f"posts[{index}]")
+
+
 def save_tracker(path: str | Path, tracker: dict) -> Path:
+    validate_tracker(tracker)
     tracker_path = Path(path)
     tracker_path.parent.mkdir(parents=True, exist_ok=True)
     tracker_path.write_text(json.dumps(tracker, ensure_ascii=False, indent=2), encoding="utf-8")

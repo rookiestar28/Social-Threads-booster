@@ -97,6 +97,65 @@ class TrackerUtilsTests(unittest.TestCase):
             if case_dir.exists():
                 shutil.rmtree(case_dir)
 
+    def test_validate_tracker_accepts_shared_post_schema(self) -> None:
+        tracker_utils = load_module()
+        tracker = tracker_utils.build_empty_tracker(
+            account_handle="@example",
+            source="api",
+            posts=[
+                tracker_utils.build_post_record(
+                    post_id="post-1",
+                    text="Example post",
+                    created_at="2026-04-20T10:00:00+00:00",
+                    source_path="api",
+                    data_completeness="full",
+                    metrics={"views": 10},
+                    snapshots=[
+                        tracker_utils.build_metric_snapshot(
+                            {"views": 10},
+                            "2026-04-20T10:00:00+00:00",
+                            captured_at="2026-04-20T11:00:00+00:00",
+                        )
+                    ],
+                )
+            ],
+        )
+
+        tracker_utils.validate_tracker(tracker)
+
+    def test_validate_tracker_rejects_actionable_post_shape_errors(self) -> None:
+        tracker_utils = load_module()
+        tracker = tracker_utils.build_empty_tracker(
+            posts=[
+                {
+                    "text": "Missing id",
+                    "created_at": "2026-04-20T10:00:00+00:00",
+                    "metrics": {"views": 1},
+                    "comments": [],
+                    "snapshots": [],
+                    "source": {"import_path": "api", "data_completeness": "partial"},
+                }
+            ]
+        )
+
+        with self.assertRaisesRegex(tracker_utils.TrackerValidationError, r"posts\[0\]\.id"):
+            tracker_utils.validate_tracker(tracker)
+
+    def test_save_tracker_fails_before_writing_invalid_tracker(self) -> None:
+        tracker_utils = load_module()
+        case_dir = TMP_DIR / "tracker-utils-validation"
+        tracker_path = case_dir / "threads_daily_tracker.json"
+        invalid_tracker = tracker_utils.build_empty_tracker(posts=[{"id": "post-1"}])
+
+        try:
+            case_dir.mkdir(parents=True, exist_ok=True)
+            with self.assertRaises(tracker_utils.TrackerValidationError):
+                tracker_utils.save_tracker(tracker_path, invalid_tracker)
+            self.assertFalse(tracker_path.exists())
+        finally:
+            if case_dir.exists():
+                shutil.rmtree(case_dir)
+
 
 if __name__ == "__main__":
     unittest.main()
