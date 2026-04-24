@@ -21,6 +21,16 @@ SENTENCE_SPLIT_RE = re.compile(r"[。！？!?]\s*|\n+")
 TOKEN_RE = re.compile(r"[A-Za-z0-9_+-]+|[\u4e00-\u9fff]")
 MANUAL_REFINEMENTS_HEADING = "## Manual Refinements (user-edited)"
 SECTION_HEADING_RE = re.compile(r"^## .+", re.MULTILINE)
+SIGNATURE_PHRASE_CANDIDATES = (
+    "其實",
+    "問題是",
+    "結果",
+    "所以",
+    "如果",
+    "不要",
+    "很多人",
+    "Here is the thing",
+)
 
 
 def load_tracker(path: Path) -> dict:
@@ -122,6 +132,160 @@ def extract_manual_refinements(existing_content: str) -> str | None:
     return section + "\n" if section else None
 
 
+def confidence_label(post_count: int, evidence_count: int) -> str:
+    if post_count < 3 or evidence_count < 2:
+        return "Low"
+    if post_count < 8 or evidence_count < 5:
+        return "Directional"
+    return "Usable"
+
+
+def count_phrase_occurrences(texts: list[str]) -> Counter[str]:
+    counts: Counter[str] = Counter()
+    joined = "\n".join(texts)
+    joined_lower = joined.lower()
+    for phrase in SIGNATURE_PHRASE_CANDIDATES:
+        if phrase.isascii():
+            count = joined_lower.count(phrase.lower())
+        else:
+            count = joined.count(phrase)
+        if count:
+            counts[phrase] = count
+    return counts
+
+
+def first_sentence(text: str) -> str:
+    sentences = parse_sentences(text)
+    return sentences[0] if sentences else ""
+
+
+def last_sentence(text: str) -> str:
+    sentences = parse_sentences(text)
+    return sentences[-1] if sentences else ""
+
+
+def summarize_counter(counter: Counter[str], limit: int = 5) -> str:
+    if not counter:
+        return "No repeated pattern reached the evidence threshold."
+    return ", ".join(f"{item} ({count})" for item, count in counter.most_common(limit))
+
+
+def build_inventory_sections(post_texts: list[str]) -> list[str]:
+    post_count = len(post_texts)
+    phrase_counts = count_phrase_occurrences(post_texts)
+    repeated_phrase_counts = Counter({phrase: count for phrase, count in phrase_counts.items() if count >= 2})
+    repeated_phrase_evidence = sum(repeated_phrase_counts.values())
+    phrase_confidence = confidence_label(post_count, repeated_phrase_evidence)
+
+    openers = Counter()
+    closers = Counter()
+    for text in post_texts:
+        opener = first_sentence(text)
+        closer = last_sentence(text)
+        if opener:
+            openers[opener[:40]] += 1
+        if closer:
+            closers[closer[:40]] += 1
+    opener_evidence = len(openers) + len(closers)
+    opener_confidence = confidence_label(post_count, opener_evidence)
+
+    joined = "\n".join(post_texts)
+    punctuation_counts = Counter(
+        {
+            "?": joined.count("?") + joined.count("？"),
+            "!": joined.count("!") + joined.count("！"),
+            ":": joined.count(":") + joined.count("："),
+            "quote_marks": joined.count("「") + joined.count("」") + joined.count('"'),
+            "numbered_lines": len(re.findall(r"(?m)^\s*\d+[.)、]", joined)),
+        }
+    )
+    punctuation_evidence = sum(punctuation_counts.values())
+    punctuation_confidence = confidence_label(post_count, punctuation_evidence)
+
+    technical_terms = Counter()
+    for text in post_texts:
+        for token in re.findall(r"[A-Za-z][A-Za-z0-9-+/.]{2,}", text):
+            technical_terms[token] += 1
+    colloquial_counts = Counter({phrase: joined.count(phrase) for phrase in ("其實", "拜託", "很多人", "不要")})
+    register_evidence = sum(technical_terms.values()) + sum(colloquial_counts.values())
+    register_confidence = confidence_label(post_count, register_evidence)
+
+    argument_markers = Counter(
+        {
+            "contrast/correction": sum(joined.count(marker) for marker in ("但", "不是", "不要", "問題是")),
+            "conditional framing": sum(joined.count(marker) for marker in ("如果", "當", "只要")),
+            "evidence/result framing": sum(joined.count(marker) for marker in ("結果", "數據", "測試", "發現")),
+            "practical instruction": sum(joined.count(marker) for marker in ("先", "再", "確認", "改")),
+        }
+    )
+    argument_evidence = sum(argument_markers.values())
+    argument_confidence = confidence_label(post_count, argument_evidence)
+
+    low_confidence_note = "Do not treat this section as a strong style rule yet."
+
+    lines = [
+        "## Recurring Signature Words and Phrases",
+        "",
+        f"Confidence: {phrase_confidence}",
+        f"Evidence count: {repeated_phrase_evidence} repeated phrase hits.",
+        summarize_counter(repeated_phrase_counts),
+    ]
+    if phrase_confidence == "Low":
+        lines.append(low_confidence_note)
+    lines.extend(
+        [
+            "",
+            "## Opener and Closer Patterns",
+            "",
+            f"Confidence: {opener_confidence}",
+            f"Evidence count: {opener_evidence} opener/closer samples.",
+            f"Common opener starts: {summarize_counter(openers, limit=3)}",
+            f"Common closer ends: {summarize_counter(closers, limit=3)}",
+        ]
+    )
+    if opener_confidence == "Low":
+        lines.append(low_confidence_note)
+    lines.extend(
+        [
+            "",
+            "## Punctuation and Rhythm Tics",
+            "",
+            f"Confidence: {punctuation_confidence}",
+            f"Evidence count: {punctuation_evidence} punctuation/rhythm markers.",
+            summarize_counter(punctuation_counts),
+        ]
+    )
+    if punctuation_confidence == "Low":
+        lines.append(low_confidence_note)
+    lines.extend(
+        [
+            "",
+            "## Language Register Markers",
+            "",
+            f"Confidence: {register_confidence}",
+            f"Evidence count: {register_evidence} register markers.",
+            f"Technical/register terms: {summarize_counter(technical_terms, limit=6)}",
+            f"Colloquial markers: {summarize_counter(colloquial_counts, limit=4)}",
+        ]
+    )
+    if register_confidence == "Low":
+        lines.append(low_confidence_note)
+    lines.extend(
+        [
+            "",
+            "## Argumentation Style Inventory",
+            "",
+            f"Confidence: {argument_confidence}",
+            f"Evidence count: {argument_evidence} argument markers.",
+            summarize_counter(argument_markers),
+        ]
+    )
+    if argument_confidence == "Low":
+        lines.append(low_confidence_note)
+    lines.append("")
+    return lines
+
+
 def build_brand_voice(tracker: dict, manual_refinements: str | None = None) -> str:
     posts = tracker.get("posts") or []
     if not posts:
@@ -177,6 +341,7 @@ def build_brand_voice(tracker: dict, manual_refinements: str | None = None) -> s
         "",
         manual_refinements or build_default_manual_refinements_section(),
         "",
+        *build_inventory_sections(post_texts),
         "## Sentence Structure Preferences",
         "",
         f"Short-to-medium sentences dominate the sample. Approximate distribution: short {short_ratio:.0f}%, medium {medium_ratio:.0f}%, long {long_ratio:.0f}%.",

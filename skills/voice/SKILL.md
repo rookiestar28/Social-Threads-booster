@@ -129,6 +129,18 @@ Analyze the user's writing style across the following dimensions. Each dimension
 - Whether there are fixed opening or closing patterns
 - When they write long replies vs short replies
 
+#### 2.12 Countable Brand Voice Inventory
+
+Generate descriptive inventory sections when data supports them. Each inventory section must include a confidence label and evidence/count language. If the dataset is thin, label the section `Confidence: Low` and state that it should not be treated as a strong style rule yet.
+
+Inventory dimensions:
+
+- Recurring signature words and phrases
+- Opener and closer patterns
+- Punctuation and rhythm tics
+- Language/register markers
+- Argumentation style markers
+
 ### Step 3: Output Brand Voice File
 
 Compile the analysis into `brand_voice.md` and save to the user's working directory.
@@ -146,6 +158,21 @@ File structure:
 
 ## Manual Refinements (user-edited)
 [User-owned corrections and always/never rules. Preserve on reruns.]
+
+## Recurring Signature Words and Phrases
+[Confidence + repeated phrase counts]
+
+## Opener and Closer Patterns
+[Confidence + opener/closer samples]
+
+## Punctuation and Rhythm Tics
+[Confidence + punctuation/rhythm counts]
+
+## Language Register Markers
+[Confidence + technical, colloquial, formal, or mixed-register markers]
+
+## Argumentation Style Inventory
+[Confidence + contrast, conditional, evidence, and instruction markers]
 
 ## Sentence Structure Preferences
 [Analysis + original text evidence]
