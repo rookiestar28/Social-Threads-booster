@@ -65,20 +65,22 @@ Do not invent a Node-based gate unless the repo later adds actual Node tooling.
 ### Windows / PowerShell
 
 ```powershell
-python -m unittest discover -s tests -p "test_*.py"
+python scripts/validate_repo.py
 ```
 
-Then run the relevant CLI E2E commands from `tests/E2E_TESTING_SOP.md`.
+This runs internal guardrails, Python regression tests, and the repo-local CLI E2E runner. Pre-commit checks are reported as skipped when this repository has no `.pre-commit-config.yaml`.
 
 ### Linux / WSL
 
 ```bash
-python -m unittest discover -s tests -p "test_*.py"
+python scripts/validate_repo.py
 ```
 
-Then run the relevant CLI E2E commands from `tests/E2E_TESTING_SOP.md`.
+This runs the same repo-local validation gate as Windows.
 
 ## Manual Staged Workflow
+
+Use this section when debugging an individual validation lane or when an implementation record needs separated command evidence.
 
 1. Detect secrets if `pre-commit` is available:
 

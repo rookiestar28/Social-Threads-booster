@@ -14,6 +14,12 @@ Accordingly, E2E means:
 
 ## Preferred Repo-Local Runner
 
+For the full repository validation gate, run:
+
+```bash
+python scripts/validate_repo.py
+```
+
 Use the maintained runner for the standard deterministic script sweep:
 
 ```bash
