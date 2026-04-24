@@ -57,6 +57,8 @@ Search the user's working directory for:
 
 Use all available files. If `brand_voice.md` exists, use it **for observation only** — to notice where the submitted post drifts from the user's own historical voice. Never use it to rewrite or pull the submission toward a brand_voice template. The heavy composition application of `brand_voice.md` belongs to `/draft`, not here.
 
+Load `knowledge/user-fact-source-of-truth.md` when the submitted post contains or implies personal facts. If a statement conflicts with the user's own history, flag the exact local issue and ask for confirmation. Do not rewrite the user's biography, chronology, work history, or lived experience into a cleaner story.
+
 ### Path B: Partial system data
 
 If `threads_daily_tracker.json` exists but `style_guide.md` or `concept_library.md` is missing:
@@ -275,6 +277,7 @@ Rules for this section:
 - Only include changes that are materially worth making. If the post is already solid, say "No pointed changes required." — do not manufacture problems.
 - Sort by priority, highest first.
 - Keep every suggestion scoped to that *one spot*. Do not cascade rewrites.
+- For personal facts, suggest confirmation or omission rather than inventing a replacement.
 - Never combine "change this + change that" into a full alternate version. If you find yourself drafting a whole new post, stop and split it back into pointed items.
 - If a fix would require restructuring the whole post (rare), say so explicitly and ask the user whether they want that scope before proposing it.
 

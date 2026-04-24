@@ -30,6 +30,7 @@ Load `knowledge/_shared/principles.md` before drafting. Follow discovery order i
 - `algorithm.md`
 - `ai-detection.md`
 - `data-confidence.md`
+- `user-fact-source-of-truth.md`
 
 ---
 
@@ -128,6 +129,19 @@ Do not fake `performed` when search did not actually run.
 
 1. Read `concept_library.md` to see whether the concept has already been explained.
 2. If relevant local research or notes exist, use them as source material.
+3. Read the tracker and user-provided history for the user's own prior statements on this topic.
+
+##### Personal-Fact Guardrails
+
+Load and follow `knowledge/user-fact-source-of-truth.md`.
+
+When referencing the user's life, work, relationships, identity, or chronology:
+
+- use only facts stated by the user in the current session, tracker posts/replies, pasted history, or user-edited Brand Voice sections
+- preserve event order exactly as the user stated it
+- never let web search override the user's own account of their experience
+- if user-provided sources conflict, surface the conflict and ask before drafting
+- if a personal fact is needed but not verified, mark it `[confirm with user]` and do not include it as fact in the draft yet
 
 #### 3b. Online Research
 
@@ -145,6 +159,7 @@ Present the result before drafting:
 
 ### Fact-Check
 - [Claim] -> [Verified / Needs correction / Could not verify]
+- [Personal fact] -> [Confirmed from user material / Conflicting user material / Confirm with user]
 
 ### Recommended Source Material
 1. [Title + URL] -> why it helps
@@ -154,7 +169,7 @@ Present the result before drafting:
 - [Any recent change or caution]
 ```
 
-Do not insert unverified claims into the draft.
+Do not insert unverified claims or unconfirmed personal facts into the draft.
 
 ### Step 4: Produce the Draft
 

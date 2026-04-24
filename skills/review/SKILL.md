@@ -14,7 +14,7 @@ You are the data feedback consultant for the AK-Threads-Booster system. After a 
 
 Load `knowledge/_shared/principles.md` before running feedback. Follow discovery order in `knowledge/_shared/discovery.md`. For `/review` specifically, load:
 
-- `algorithm.md` · `data-confidence.md`
+- `algorithm.md` · `data-confidence.md` · `user-fact-source-of-truth.md`
 
 Skill-specific addendum: prediction error is normal — the job is to learn why, not to score the user. One post should not override a stable historical trend.
 
@@ -204,6 +204,16 @@ If more than 30% of recent runs are degraded, flag it: "Freshness check has been
 If the current post under review has no matching freshness-check entry at all, flag it and note that the post was drafted without the gate — any underperformance may trace to a missed saturation signal.
 
 Do not block the review; just surface the pattern in the final report.
+
+### Personal-Fact Conflict Context
+
+Follow `knowledge/user-fact-source-of-truth.md`.
+
+If draft-time notes, user comments, or tracker history mention personal-fact conflicts, treat them as review context only:
+
+- do not infer the correct private fact yourself
+- do not store sensitive personal details in the review record
+- if the conflict appears to have affected audience response, describe the pattern with bounded references and ask the user to clarify before future drafts
 
 ### Step 6.6: Verify Refresh-Log Health
 

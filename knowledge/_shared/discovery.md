@@ -12,6 +12,7 @@ Use Glob to locate, relative to the plugin root:
 - `**/knowledge/algorithm.md` — Meta algorithm mechanics
 - `**/knowledge/ai-detection.md` — AI-tone detection patterns
 - `**/knowledge/data-confidence.md` — shared data-confidence rubric
+- `**/knowledge/user-fact-source-of-truth.md` — user-owned fact and chronology guardrails
 - `**/knowledge/_shared/principles.md` — consultant principles (load first)
 - `**/knowledge/chrome-selectors.md` — Chrome MCP selectors (only `/refresh` needs this)
 
