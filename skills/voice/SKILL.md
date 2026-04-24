@@ -16,7 +16,7 @@ Load `knowledge/_shared/principles.md` before analyzing. Follow discovery order 
 
 - `data-confidence.md`
 
-Skill-specific addendum: Brand Voice is descriptive, not prescriptive. Every dimension must cite original-text evidence.
+Skill-specific addendum: Brand Voice is descriptive, not prescriptive. Every generated dimension must cite original-text evidence. Treat the file as a first-draft reference that the user can correct, not as a final verdict.
 
 ---
 
@@ -133,6 +133,8 @@ Analyze the user's writing style across the following dimensions. Each dimension
 
 Compile the analysis into `brand_voice.md` and save to the user's working directory.
 
+If `brand_voice.md` already exists, preserve non-empty content under `## Manual Refinements (user-edited)` exactly. Do not silently overwrite that section. If the user has edited ambiguous content outside the Manual Refinements section, ask before overwriting when working interactively; deterministic script reruns only guarantee preservation for the Manual Refinements section.
+
 File structure:
 
 ```markdown
@@ -141,6 +143,9 @@ File structure:
 > Based on deep analysis of X posts + Y comment replies
 > Generated: YYYY-MM-DD
 > This file is produced by /voice and referenced by /draft
+
+## Manual Refinements (user-edited)
+[User-owned corrections and always/never rules. Preserve on reruns.]
 
 ## Sentence Structure Preferences
 [Analysis + original text evidence]
@@ -185,7 +190,7 @@ After analysis, report to the user:
 
 1. How many posts and comment replies were analyzed
 2. Highlight 2–3 most prominent style characteristics
-3. Remind the user: "Brand Voice profile has been created. The `/draft` module will automatically reference it when generating drafts."
+3. Remind the user: "Brand Voice profile has been created. The `/draft` module will automatically reference it when generating drafts. You can correct it in Manual Refinements, and those edits take priority."
 4. If data was insufficient, honestly state which dimensions had rough analysis
 
 ---
@@ -193,6 +198,7 @@ After analysis, report to the user:
 ## Boundary Reminders
 
 - Brand Voice is descriptive, not prescriptive. Records "how the user writes", not "how the user should write".
+- Manual Refinements are user-edited and override generated observations. They are the right place for wrong analysis, missing traits, always/never style rules, phrases that sound like the user, and phrases that do not.
 - Every dimension must have original text evidence. Do not draw conclusions based on feelings.
 - If data is insufficient for a dimension (e.g., too few comment replies), honestly state "not enough data for this dimension, skipping for now".
 - If the user accumulates more posts later, they can re-run `/voice` to update the Brand Voice profile.

@@ -56,7 +56,7 @@ Search the user's working directory for:
 - `brand_voice.md` if available
 - optional `social_booster_config.json`
 
-Use all available files. If `brand_voice.md` exists, use it **for observation only** — to notice where the submitted post drifts from the user's own historical voice. Never use it to rewrite or pull the submission toward a brand_voice template. The heavy composition application of `brand_voice.md` belongs to `/draft`, not here.
+Use all available files. If `brand_voice.md` exists, use it **for observation only** — to notice where the submitted post drifts from the user's own historical voice. Treat `## Manual Refinements (user-edited)` as higher priority than generated Brand Voice sections when identifying drift. Never use Brand Voice to rewrite or pull the submission toward a template. The heavy composition application of `brand_voice.md` belongs to `/draft`, not here.
 
 If `social_booster_config.json` exists, read `workflows.analyze.discussion_mode` using the same values validated by `scripts/workflow_preferences.py`:
 

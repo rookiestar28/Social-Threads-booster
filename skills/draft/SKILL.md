@@ -72,9 +72,11 @@ Only persist preference changes when the user explicitly asks to update preferen
 
 Load in this order:
 
-1. `brand_voice.md` if present
+1. `brand_voice.md` if present, with `## Manual Refinements (user-edited)` as the highest-priority style signal
 2. `style_guide.md`
 3. the user's recent and high-performing posts from the tracker
+
+When Manual Refinements conflict with generated Brand Voice sections, follow Manual Refinements and mention the conflict briefly if it affects the draft.
 
 State the quality of the voice baseline honestly:
 

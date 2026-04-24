@@ -19,6 +19,8 @@ from pathlib import Path
 
 SENTENCE_SPLIT_RE = re.compile(r"[。！？!?]\s*|\n+")
 TOKEN_RE = re.compile(r"[A-Za-z0-9_+-]+|[\u4e00-\u9fff]")
+MANUAL_REFINEMENTS_HEADING = "## Manual Refinements (user-edited)"
+SECTION_HEADING_RE = re.compile(r"^## .+", re.MULTILINE)
 
 
 def load_tracker(path: Path) -> dict:
@@ -88,7 +90,39 @@ def quote_lines(snippets: list[str]) -> list[str]:
     return [f"> {snippet}" for snippet in snippets]
 
 
-def build_brand_voice(tracker: dict) -> str:
+def build_default_manual_refinements_section() -> str:
+    lines = [
+        MANUAL_REFINEMENTS_HEADING,
+        "",
+        "<!-- User-edited section. Re-running /voice preserves non-empty content here. -->",
+        "",
+        "Use this section to correct or override generated observations:",
+        "",
+        "- Wrong analysis:",
+        "- Missing traits:",
+        "- Always do:",
+        "- Never do:",
+        "- Phrases that sound like me:",
+        "- Phrases that do not sound like me:",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+def extract_manual_refinements(existing_content: str) -> str | None:
+    marker = f"{MANUAL_REFINEMENTS_HEADING}\n"
+    start = existing_content.find(marker)
+    if start == -1:
+        return None
+
+    after_start = start + len(marker)
+    next_heading = SECTION_HEADING_RE.search(existing_content, after_start)
+    end = next_heading.start() if next_heading else len(existing_content)
+    section = existing_content[start:end].strip()
+    return section + "\n" if section else None
+
+
+def build_brand_voice(tracker: dict, manual_refinements: str | None = None) -> str:
     posts = tracker.get("posts") or []
     if not posts:
         raise ValueError("tracker contains no posts")
@@ -140,6 +174,8 @@ def build_brand_voice(tracker: dict) -> str:
         "> This file is produced by /voice and referenced by /draft",
         "",
         "---",
+        "",
+        manual_refinements or build_default_manual_refinements_section(),
         "",
         "## Sentence Structure Preferences",
         "",
@@ -236,7 +272,10 @@ def main() -> int:
 
     try:
         tracker = load_tracker(tracker_path)
-        content = build_brand_voice(tracker)
+        existing_manual_refinements = None
+        if output_path.exists():
+            existing_manual_refinements = extract_manual_refinements(output_path.read_text(encoding="utf-8"))
+        content = build_brand_voice(tracker, manual_refinements=existing_manual_refinements)
     except Exception as exc:  # noqa: BLE001 - CLI should return actionable error text
         print(f"[generate_brand_voice] {exc}", file=sys.stderr)
         return 1
