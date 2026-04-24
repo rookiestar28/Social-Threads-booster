@@ -1,241 +1,335 @@
-[中文](README.md) | [English](README.en.md)
+# Social-Threads-Booster
 
-# AK體-基於Threads演算法的優化skill
+Social-Threads-Booster is an AI-native operating system for Threads creators who want to make better posting decisions from their own historical data.
 
-AK-Threads-Booster 是這個 skill 的內部代號與安裝 id。
+It is not a generic post generator and it does not promise viral outcomes. The repository provides a structured skill workflow and supporting Python tools for turning a creator's Threads history into a repeatable content process:
 
-AK-Threads-Booster 是一套給 Threads 創作者用的 AI skill 系統。
+- import and normalize historical posts
+- generate a style guide and concept library
+- analyze drafts before publishing
+- recommend topics with demand and freshness signals
+- estimate likely performance ranges
+- review actual outcomes and preserve learning in the tracker
 
-它不是要幫你亂寫一堆貼文，而是幫你把「選題、起草、分析、預測、復盤」變成一套有資料依據的工作流，讓你更容易發出值得被分享、收藏、討論的內容。
-
-如果你平常的痛點是這些：
-
-- 不知道下一篇到底該寫什麼
-- 有很多題目，但分不出哪個更值得先發
-- 文章不是寫不好，只是常常撞題、老梗、沒新鮮度
-- 想讓內容更像自己，不想一看就很 AI
-- 發完之後沒有把結果整理回來，下一篇又從零猜
-
-這套 skill 就是為這些問題設計的。
-
-它不保證爆文。
-
-它做的是讓你用自己的歷史資料，提高每一次發文決策的品質，讓「更有擴散機會」這件事變得比較可複製。
+The core idea is simple: every post should improve the next decision.
 
 ---
 
-## 這套 skill 會幫你做什麼
+## Why This Repository Exists
 
-### 1. 幫你選出更值得發的題
+Most creator tools optimize for speed. They help produce more text, but they rarely answer the harder operational questions:
 
-`/topics` 不是單純丟熱門題給你。
+- Which topic is worth posting now?
+- Is this angle already stale for the account?
+- Does this draft fit the creator's historical voice?
+- What is the main distribution risk before publishing?
+- Did the actual result confirm or weaken the original assumption?
 
-它會一起看：
+Social-Threads-Booster is built for those decisions. It treats the creator's history as the primary source of truth, then combines structured data, agent workflows, and deterministic scripts into a closed feedback loop.
 
-- 你的歷史貼文表現
-- 留言裡反覆出現的問題
-- 你自己曾經回過哪些問題
-- 最近有沒有撞到同一個 semantic cluster
-- 外部話題現在是不是已經過熱
+---
 
-也就是說，它不只是找「熱門」，而是找「對你這個帳號來說，現在更值得發」的題目。
+## Core Strengths
 
-### 2. 幫你起草，但盡量像你
+### Data-backed creator workflow
 
-`/draft` 會根據：
+The system is centered on `threads_daily_tracker.json`, a canonical local tracker that stores posts, metrics, comments, snapshots, prediction records, review notes, algorithm signals, and psychology signals.
+
+### Modular skill architecture
+
+Each workflow is isolated as a skill module:
+
+- `/setup` for initialization and artifact generation
+- `/topics` for topic recommendation
+- `/draft` for new post drafting
+- `/analyze` for pre-publish diagnosis
+- `/predict` for performance range estimation
+- `/review` for post-publish learning
+- `/refresh` for tracker updates
+- `/voice` for brand voice profiling
+
+This separation keeps the system inspectable, extensible, and easier to adapt to different creator workflows.
+
+### Deterministic data pipeline
+
+The repository includes Python scripts for repeatable data operations:
+
+- importing Meta exports
+- fetching Threads API data
+- refreshing metrics snapshots
+- generating setup artifacts
+- rendering human-readable companion files
+- annotating topic freshness and fatigue
+- logging freshness and refresh health
+
+The agent handles judgment-heavy work. The scripts handle repeatable file and tracker operations.
+
+### Closed-loop learning
+
+The `/predict` and `/review` flow allows the system to compare expectations against actual performance. This makes the tracker more useful over time instead of leaving each post as an isolated event.
+
+### Honest operating boundaries
+
+Social-Threads-Booster is designed to improve decision quality, not guarantee reach. It surfaces confidence levels, missing data, stale metrics, skipped freshness checks, and weak historical baselines instead of hiding uncertainty.
+
+---
+
+## How It Works
+
+```text
+Data sources
+  -> Threads API, Meta export, existing JSON/CSV/Markdown, or Chrome-assisted profile refresh
+
+Normalization
+  -> threads_daily_tracker.json
+
+Generated knowledge assets
+  -> style_guide.md
+  -> concept_library.md
+  -> brand_voice.md
+  -> posts_by_date.md / posts_by_topic.md / comments.md
+
+Skill workflows
+  -> topics
+  -> draft
+  -> analyze
+  -> predict
+  -> review
+  -> refresh
+
+Feedback loop
+  -> metrics snapshots, prediction comparison, review notes, freshness logs, refresh logs
+```
+
+---
+
+## Main Workflows
+
+### 1. Setup and import
+
+`/setup` initializes the workspace by importing historical Threads data and generating the files that downstream workflows use.
+
+Supported input paths include:
+
+- Threads Developer API
+- Meta account data export
+- existing structured or semi-structured files
+- Chrome-assisted profile refresh through a compatible MCP runtime
+- migration from an older tracker shape
+
+Primary scripts:
+
+```bash
+python scripts/fetch_threads.py --token YOUR_THREADS_TOKEN --output threads_daily_tracker.json
+python scripts/parse_export.py --input META_EXPORT_PATH --output threads_daily_tracker.json
+python scripts/run_setup_artifacts.py --tracker threads_daily_tracker.json --output-dir .
+```
+
+### 2. Topic recommendation
+
+`/topics` recommends 3 to 5 candidate topics by combining:
+
+- historical performance
+- comment demand
+- creator reply patterns
+- recent topic distribution
+- semantic freshness
+- external saturation checks when search is available
+- concept-library extension opportunities
+
+The goal is not to chase generic trends. The goal is to find topics that are timely, account-fit, and not already exhausted.
+
+### 3. Draft generation
+
+`/draft` creates a starting draft from a selected topic. It uses:
 
 - `brand_voice.md`
 - `style_guide.md`
-- 歷史貼文
-- concept library
-
-來起草一篇比較接近你語感的內容。
-
-而且它不是拿到題目就直接寫，前面還會先做 freshness gate，避免你花時間寫一個其實已經被寫爛的角度。
-
-### 3. 幫你在發文前做最後判斷
-
-`/analyze` 是這套 skill 的 decision layer。
-
-它會看：
-
-- 有沒有演算法紅線
-- 這篇最大的上升空間在哪
-- 主要卡點在哪
-- 比較像 follower-fit 還是 stranger-fit
-- 有沒有 AI 味太重
-
-這樣你在按下發送前，不是只靠感覺。
-
-### 4. 幫你建立比較合理的預期
-
-`/predict` 會用相似歷史貼文幫你估 24 小時的可能區間，讓你不要因為單篇波動就誤判。
-
-### 5. 幫你把發文結果變成下一次的優勢
-
-`/review` 會把實際表現、預測偏差、風格訊號再寫回 tracker。
-
-這點很重要，因為很多工具只會給你建議，不會讓系統越用越準。這套 skill 的重點就是把學到的東西留下來。
-
-### 6. 幫你更新 tracker，不用每次手動整理
-
-`/refresh` 可以更新 `threads_daily_tracker.json`：
-
-- 有 Threads API token 就走 API
-- 沒有 API 就走 Chrome MCP 抓自己的 Threads profile
-
-你不用每次都自己慢慢補資料。
-
----
-
-## 最適合誰
-
-這套 skill 特別適合：
-
-- 已經有固定在經營 Threads 的人
-- 想把發文從「靈感型」變成「決策型」的人
-- 想更穩定找到下一篇題目的人
-- 想知道自己什麼內容比較有機會擴散的人
-- 想把歷史貼文真的變成可用資產的人
-
-如果你現在還完全沒有歷史資料，它也可以用，但前期的判斷會比較弱。這套系統的價值，會隨著你的資料累積而變強。
-
----
-
-## 第一次使用你會得到什麼
-
-跑完 `/setup` 之後，工作目錄通常會有：
-
-- `threads_daily_tracker.json`
-- `style_guide.md`
+- historical posts
 - `concept_library.md`
-- `brand_voice.md`（如果有跑 `/voice`）
-- `posts_by_date.md`
-- `posts_by_topic.md`
-- `comments.md`
+- freshness checks
+- source verification for factual claims
 
-其中最重要的是 `threads_daily_tracker.json`。
+Drafting is intentionally treated as a starting point. The user is expected to edit before publishing.
 
-其他 skill 幾乎都是圍繞這份 tracker 在做判斷。
+### 4. Pre-publish analysis
+
+`/analyze` is a diagnostic layer for posts the user has already written. It checks:
+
+- algorithm red lines
+- suppression risks
+- hook and payoff alignment
+- follower-fit versus stranger-fit
+- historical style match
+- share and comment potential
+- AI-tone traces
+
+By default, `/analyze` does not rewrite the whole post. It gives pointed, local changes so the user stays in control of the final voice.
+
+### 5. Performance prediction
+
+`/predict` estimates conservative, baseline, and optimistic 24-hour ranges using comparable historical posts.
+
+It is designed as expectation management, not false precision. The prediction can be stored in the tracker so `/review` can compare it against real outcomes later.
+
+### 6. Post-publish review
+
+`/review` closes the loop after publishing. It compares actual metrics against prior predictions, updates review state, records validated or weakened assumptions, and checks whether freshness or refresh automation has degraded.
+
+### 7. Refresh and snapshots
+
+`/refresh` and `scripts/update_snapshots.py` keep metrics and comments current.
+
+API-backed refresh is preferred for reliability. Chrome-assisted refresh is available as a fallback when the user cannot use the API, but it depends on a compatible logged-in browser runtime.
 
 ---
 
-## 建議使用流程
+## Generated Files
 
-### 第一次使用
+After setup, the working directory usually contains:
+
+| File | Purpose |
+| --- | --- |
+| `threads_daily_tracker.json` | Canonical machine-readable tracker |
+| `style_guide.md` | Quantitative writing and performance patterns |
+| `concept_library.md` | Concepts, analogies, repeated clusters, and underdeveloped ideas |
+| `brand_voice.md` | Qualitative voice profile used by `/draft` |
+| `posts_by_date.md` | Human-readable chronological post archive |
+| `posts_by_topic.md` | Human-readable topic index |
+| `comments.md` | Human-readable comment log |
+| `threads_freshness.log` | JSONL audit log for freshness checks |
+| `threads_refresh.log` | JSONL audit log for refresh runs |
+
+---
+
+## Script Reference
+
+| Script | Function |
+| --- | --- |
+| `scripts/fetch_threads.py` | Fetch posts, metrics, and replies from the Threads API |
+| `scripts/parse_export.py` | Convert a Meta account export into tracker format |
+| `scripts/update_snapshots.py` | Refresh metrics, append snapshots, and update checkpoint windows |
+| `scripts/generate_style_guide.py` | Generate `style_guide.md` from the tracker |
+| `scripts/generate_concept_library.py` | Generate `concept_library.md` from the tracker |
+| `scripts/generate_brand_voice.py` | Generate `brand_voice.md` from the tracker |
+| `scripts/run_setup_artifacts.py` | Generate the standard setup artifact bundle |
+| `scripts/render_companions.py` | Render readable post, topic, and comment Markdown files |
+| `scripts/update_topic_freshness.py` | Add semantic cluster and fatigue signals to tracker posts |
+| `scripts/log_freshness_audit.py` | Append freshness-check audit entries |
+| `scripts/summarize_log_health.py` | Summarize refresh and freshness log health |
+
+---
+
+## Recommended Operating Flow
+
+### First-time setup
 
 ```text
 /setup
 /voice
 ```
 
-先把歷史資料整理好，再把 Brand Voice 建起來。
-
-### 平常發文前
+### Before posting
 
 ```text
 /topics
 /draft
 /analyze
+/predict
 ```
 
-這是最實用的一組流程：
-
-- `/topics` 找題
-- `/draft` 起草
-- `/analyze` 發文前檢查
-
-### 發完之後
+### After posting
 
 ```text
-/predict
+/refresh
 /review
 ```
 
-這樣系統會慢慢知道：
-
-- 你估得準不準
-- 哪些題真的會跑
-- 哪些風格只是你以為有效
-
 ---
 
-## 資料可以怎麼進來
+## Installation
 
-你可以用這些方式建立資料：
-
-- Threads Developer API token
-- Meta 官方匯出 zip
-- 既有 JSON / Markdown / CSV
-- Chrome 已登入 Threads + Claude in Chrome MCP
-- 舊版 tracker migration
-
-API 不是必須，但如果你有 API，更新會輕鬆很多。
-
----
-
-## 產品定位
-
-AK-Threads-Booster 是一套以你的 Threads 歷史資料為核心的內容決策系統。
-
-它的重點不是自動亂生文，而是幫你：
-
-- 找出更值得發的題目
-- 起草更接近你自己的內容
-- 避開明顯的重複與紅線
-- 把每次發文結果累積成下一次判斷的依據
-
----
-
-## 安裝
-
-### Claude Code
+### Claude Code plugin install
 
 ```bash
-claude install-plugin https://github.com/akseolabs-seo/AK-Threads-booster
+claude install-plugin https://github.com/akseolabs-seo/Social-Threads-Booster
 ```
 
-### 手動安裝
+### Manual install
 
 ```bash
-git clone https://github.com/akseolabs-seo/AK-Threads-booster.git
+git clone https://github.com/akseolabs-seo/Social-Threads-Booster.git
+cd Social-Threads-Booster
+python -m pip install -r scripts/requirements.txt
 ```
 
-再依你使用的工具，把這個 repo 放到對應的 skill / plugin 目錄即可。
+Place the repository in the plugin or skill directory used by your agent runtime.
 
 ---
 
-## 目錄結構
+## Requirements
+
+- Python 3.9+
+- `requests` for the Threads API path
+- a compatible AI agent runtime for the skill workflows
+- optional Threads API access token for reliable refresh
+- optional Chrome MCP-compatible browser runtime for browser-assisted refresh
+
+---
+
+## Repository Layout
 
 ```text
-AK-Threads-booster/
+Social-Threads-Booster/
 |- SKILL.md
-|- AGENTS.md
+|- README.md
 |- skills/
-|  |- setup/SKILL.md
-|  |- refresh/SKILL.md
-|  |- analyze/SKILL.md
-|  |- draft/SKILL.md
-|  |- predict/SKILL.md
-|  |- review/SKILL.md
-|  |- topics/SKILL.md
-|  |- voice/SKILL.md
+|  |- setup/
+|  |- refresh/
+|  |- analyze/
+|  |- draft/
+|  |- predict/
+|  |- review/
+|  |- topics/
+|  |- voice/
 |- knowledge/
 |  |- _shared/
-|  |- psychology.md
 |  |- algorithm.md
 |  |- ai-detection.md
-|  |- data-confidence.md
 |  |- chrome-selectors.md
+|  |- data-confidence.md
+|  |- psychology.md
 |- scripts/
-|  |- fetch_threads.py
-|  |- parse_export.py
-|  |- update_snapshots.py
-|  |- update_topic_freshness.py
-|  |- render_companions.py
 |- templates/
 |- examples/
+|- tests/
 ```
+
+---
+
+## Testing
+
+Run the Python regression suite:
+
+```bash
+python -m unittest discover -s tests -p "test_*.py"
+```
+
+The tests cover tracker scaffolding, export parsing, setup artifact generation, style guide generation, concept library generation, brand voice generation, and audit-log health helpers.
+
+---
+
+## What This Project Is Not
+
+Social-Threads-Booster is not:
+
+- a hosted SaaS product
+- a browser frontend
+- a scheduler by itself
+- a viral-post guarantee system
+- a replacement for creator judgment
+
+It is a local, data-centered skill and scripting toolkit for making better Threads content decisions.
 
 ---
 
