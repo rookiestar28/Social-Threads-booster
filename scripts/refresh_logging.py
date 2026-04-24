@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Optional
 
 from tracker_utils import utc_now_iso
+from log_redaction import sanitize_log_value
 
 
 ALLOWED_FAILURE_REASONS = {
@@ -38,7 +39,7 @@ def build_refresh_failure_entry(
         "ts": ts or utc_now_iso(),
         "ok": False,
         "reason": normalize_failure_reason(reason),
-        "detail": detail[:240],
+        "detail": detail,
     }
     entry.update(extra)
     return entry
@@ -68,7 +69,8 @@ def build_refresh_success_entry(
 def append_refresh_log(log_path: str | Path, entry: dict) -> Path:
     path = Path(log_path)
     path.parent.mkdir(parents=True, exist_ok=True)
+    sanitized_entry = sanitize_log_value(entry)
     with path.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(entry, ensure_ascii=False, separators=(",", ":")))
+        fh.write(json.dumps(sanitized_entry, ensure_ascii=False, separators=(",", ":")))
         fh.write("\n")
     return path
