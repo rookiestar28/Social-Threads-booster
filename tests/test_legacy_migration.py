@@ -1,11 +1,17 @@
 import importlib.util
+import json
+import shutil
+import subprocess
 import sys
 import unittest
+import uuid
 from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MODULE_PATH = REPO_ROOT / "scripts" / "legacy_migration.py"
+CLI_PATH = REPO_ROOT / "scripts" / "migrate_legacy_tracker.py"
+TMP_DIR = REPO_ROOT / ".tmp"
 
 
 def load_module():
@@ -119,6 +125,109 @@ This comment is too far away.
         self.assertEqual(len(tracker["unmatched_comments"]), 1)
         self.assertEqual(report["comments_attached"], 1)
         self.assertEqual(report["unmatched_comments"], 1)
+
+    def test_cli_dry_run_prints_summary_without_writing_output(self) -> None:
+        case_dir = TMP_DIR / f"legacy-cli-{uuid.uuid4().hex}"
+        input_path = case_dir / "legacy.json"
+        output_path = case_dir / "threads_daily_tracker.json"
+        legacy = {
+            "_meta": {"account": "@old"},
+            "posts": {
+                "legacy-1": {
+                    "title": "Short title",
+                    "date": "2026-04-17 13:36",
+                    "data_snapshots": [],
+                }
+            },
+        }
+
+        try:
+            case_dir.mkdir(parents=True, exist_ok=True)
+            input_path.write_text(json.dumps(legacy), encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(CLI_PATH),
+                    "--input",
+                    str(input_path),
+                    "--output",
+                    str(output_path),
+                ],
+                capture_output=True,
+                text=True,
+                cwd=REPO_ROOT,
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr or result.stdout)
+            summary = json.loads(result.stdout)
+            self.assertTrue(summary["dry_run"])
+            self.assertEqual(summary["report"]["posts_migrated"], 1)
+            self.assertFalse(output_path.exists())
+        finally:
+            if case_dir.exists():
+                shutil.rmtree(case_dir)
+
+    def test_cli_write_mode_creates_backup_and_regenerates_companions(self) -> None:
+        case_dir = TMP_DIR / f"legacy-cli-{uuid.uuid4().hex}"
+        tracker_path = case_dir / "threads_daily_tracker.json"
+        posts_markdown_path = case_dir / "posts_by_date.md"
+        legacy = {
+            "_meta": {"account": "@old"},
+            "posts": {
+                "legacy-1": {
+                    "title": "Short title",
+                    "date": "2026-04-17 13:36",
+                    "topic": "SEO",
+                    "data_snapshots": [],
+                }
+            },
+        }
+        posts_markdown = """### 2026-04-17 13:40
+**分類：** SEO
+
+Recovered full post body for companion rendering.
+---
+"""
+
+        try:
+            case_dir.mkdir(parents=True, exist_ok=True)
+            tracker_path.write_text(json.dumps(legacy), encoding="utf-8")
+            posts_markdown_path.write_text(posts_markdown, encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(CLI_PATH),
+                    "--input",
+                    str(tracker_path),
+                    "--output",
+                    str(tracker_path),
+                    "--posts-markdown",
+                    str(posts_markdown_path),
+                    "--write",
+                    "--render-companions",
+                    "--companion-dir",
+                    str(case_dir),
+                    "--lang",
+                    "en",
+                ],
+                capture_output=True,
+                text=True,
+                cwd=REPO_ROOT,
+            )
+
+            self.assertEqual(result.returncode, 0, msg=result.stderr or result.stdout)
+            summary = json.loads(result.stdout)
+            self.assertFalse(summary["dry_run"])
+            self.assertTrue(summary["wrote"])
+            self.assertTrue(summary["backup_path"])
+            self.assertEqual(len(list(case_dir.glob("threads_daily_tracker.json.legacy-*"))), 1)
+            tracker = json.loads(tracker_path.read_text(encoding="utf-8"))
+            self.assertIn("Recovered full post body", tracker["posts"][0]["text"])
+            self.assertTrue((case_dir / "posts_by_date.md").exists())
+            self.assertTrue((case_dir / "comments.md").exists())
+        finally:
+            if case_dir.exists():
+                shutil.rmtree(case_dir)
 
 
 if __name__ == "__main__":
