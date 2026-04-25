@@ -14,7 +14,7 @@ import math
 import re
 import sys
 from collections import Counter, defaultdict
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean
 from typing import Iterable
@@ -438,7 +438,7 @@ def build_style_guide(tracker: dict) -> str:
         "# Personalized Style Guide",
         "",
         "> Generated from the user's historical Threads posts.",
-        f"> Last updated: `{datetime.now(UTC).date().isoformat()}`",
+        f"> Last updated: `{datetime.now(timezone.utc).date().isoformat()}`",
         "",
         "---",
         "",

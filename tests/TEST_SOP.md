@@ -62,6 +62,32 @@ Do not invent a Node-based gate unless the repo later adds actual Node tooling.
 
 ## Quick Start (Current CI-parity Core)
 
+### Enable Git pre-push hook
+
+Enable the repository-managed pre-push hook once per clone:
+
+```bash
+python scripts/install_git_hooks.py
+```
+
+This sets:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+After this, `git push` automatically runs `scripts/pre_push_checks.sh`, which selects a project-local virtualenv and runs:
+
+```bash
+python scripts/validate_repo.py
+```
+
+Disable only when intentionally troubleshooting local Git hooks:
+
+```bash
+git config --unset core.hooksPath
+```
+
 ### Windows / PowerShell
 
 ```powershell

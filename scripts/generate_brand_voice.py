@@ -13,7 +13,7 @@ import json
 import re
 import sys
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -334,7 +334,7 @@ def build_brand_voice(tracker: dict, manual_refinements: str | None = None) -> s
         "# Brand Voice Profile",
         "",
         f"> Based on deep analysis of {len(post_texts)} posts + {len(author_replies)} comment replies",
-        f"> Generated: {datetime.now(UTC).date().isoformat()}",
+        f"> Generated: {datetime.now(timezone.utc).date().isoformat()}",
         "> This file is produced by /voice and referenced by /draft",
         "",
         "---",

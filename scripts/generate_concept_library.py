@@ -14,7 +14,7 @@ import itertools
 import re
 import sys
 from collections import Counter, defaultdict
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -222,7 +222,7 @@ def build_concept_library(tracker: dict) -> str:
         "# Concept Library",
         "",
         "> Tracks concepts the user has already explained to the audience.",
-        f"> Last updated: `{datetime.now(UTC).date().isoformat()}`",
+        f"> Last updated: `{datetime.now(timezone.utc).date().isoformat()}`",
         "",
         "---",
         "",

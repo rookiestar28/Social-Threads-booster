@@ -32,7 +32,10 @@ def remove_tree(path: Path) -> None:
         os.chmod(target, 0o700)
         function(target)
 
-    shutil.rmtree(path, onexc=clear_readonly)
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=clear_readonly)
+    else:
+        shutil.rmtree(path, onerror=clear_readonly)
 
 
 class InternalGuardrailTests(unittest.TestCase):
