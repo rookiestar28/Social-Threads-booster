@@ -41,6 +41,11 @@ EN_STOPWORDS = {
     "using", "used", "make", "made", "than", "want", "need", "post", "thread", "threads",
 }
 
+GENERIC_TOPIC_TERMS = {
+    "content", "post", "posts", "thread", "threads", "article", "articles",
+    "內容", "文章", "貼文", "主題",
+}
+
 
 def load_tracker(tracker_path: str) -> dict:
     path = Path(tracker_path)
@@ -86,6 +91,10 @@ def extract_word_tokens(text: str) -> List[str]:
     return tokens
 
 
+def compact_ascii_token(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "", normalize_text(text))
+
+
 def is_non_ascii_letter(ch: str) -> bool:
     return (
         "\u4e00" <= ch <= "\u9fff"
@@ -106,6 +115,30 @@ def extract_char_ngrams(text: str, min_n: int = 2, max_n: int = 3) -> List[str]:
     return ngrams
 
 
+def extract_topic_terms(topic: str) -> List[str]:
+    normalized = normalize_text(topic)
+    if not normalized:
+        return []
+
+    terms = []
+    compact_ascii = compact_ascii_token(topic)
+    if len(compact_ascii) >= 2:
+        terms.append(compact_ascii)
+
+    for token in WORD_RE.findall(normalized):
+        if token not in EN_STOPWORDS and not token.isdigit():
+            terms.append(token)
+
+    compact_non_ascii = "".join(ch for ch in normalized if is_non_ascii_letter(ch))
+    if compact_non_ascii:
+        terms.append(compact_non_ascii)
+        for n in range(2, min(4, len(compact_non_ascii)) + 1):
+            for idx in range(len(compact_non_ascii) - n + 1):
+                terms.append(compact_non_ascii[idx: idx + n])
+
+    return list(dict.fromkeys(term for term in terms if len(term) >= 2))
+
+
 def jaccard(a: Sequence[str], b: Sequence[str]) -> float:
     set_a = set(a)
     set_b = set(b)
@@ -114,13 +147,70 @@ def jaccard(a: Sequence[str], b: Sequence[str]) -> float:
     return len(set_a & set_b) / len(set_a | set_b)
 
 
+def term_counter(features: dict) -> Counter:
+    counter = Counter()
+
+    for token in features["words"]:
+        counter[f"word:{token}"] += 1.0
+    for token in features["char_ngrams"]:
+        counter[f"char:{token}"] += 0.25
+    for token in features.get("topic_terms", []):
+        weight = 2.0 if token in GENERIC_TOPIC_TERMS else 4.0
+        counter[f"topic:{token}"] += weight
+    if features["content_type"]:
+        counter[f"ct:{features['content_type']}"] += 0.25
+
+    return counter
+
+
+def build_weighted_term_vectors(features: List[dict]) -> List[Dict[str, float]]:
+    raw_vectors = [term_counter(item) for item in features]
+    document_frequency = Counter()
+    for vector in raw_vectors:
+        for term in vector:
+            document_frequency[term] += 1
+
+    total_docs = len(raw_vectors)
+    weighted_vectors: List[Dict[str, float]] = []
+    for vector in raw_vectors:
+        weighted = {}
+        for term, value in vector.items():
+            idf = math.log((1 + total_docs) / (1 + document_frequency[term])) + 1
+            weighted[term] = float(value) * idf
+        weighted_vectors.append(weighted)
+    return weighted_vectors
+
+
+def cosine_similarity(left: Dict[str, float], right: Dict[str, float]) -> float:
+    if not left or not right:
+        return 0.0
+
+    if len(left) > len(right):
+        left, right = right, left
+
+    dot = sum(value * right.get(term, 0.0) for term, value in left.items())
+    if dot <= 0:
+        return 0.0
+
+    left_norm = math.sqrt(sum(value * value for value in left.values()))
+    right_norm = math.sqrt(sum(value * value for value in right.values()))
+    if left_norm == 0 or right_norm == 0:
+        return 0.0
+
+    return dot / (left_norm * right_norm)
+
+
 def build_semantic_features(post: dict) -> dict:
     text = post.get("text", "")
     topics = [str(topic).strip().lower() for topic in post.get("topics", []) if str(topic).strip()]
+    topic_terms = []
+    for topic in topics:
+        topic_terms.extend(extract_topic_terms(topic))
     return {
         "words": extract_word_tokens(text),
         "char_ngrams": extract_char_ngrams(text),
         "topics": topics,
+        "topic_terms": list(dict.fromkeys(topic_terms)),
         "content_type": str(post.get("content_type", "") or "").lower(),
     }
 
@@ -128,14 +218,16 @@ def build_semantic_features(post: dict) -> dict:
 def semantic_similarity(left: dict, right: dict) -> float:
     word_score = jaccard(left["words"], right["words"])
     char_score = jaccard(left["char_ngrams"], right["char_ngrams"])
-    topic_inputs_left = list(left["topics"])
-    topic_inputs_right = list(right["topics"])
+    topic_inputs_left = list(left["topics"]) + [f"term:{term}" for term in left.get("topic_terms", [])]
+    topic_inputs_right = list(right["topics"]) + [f"term:{term}" for term in right.get("topic_terms", [])]
     if left["content_type"]:
         topic_inputs_left.append(f"ct:{left['content_type']}")
     if right["content_type"]:
         topic_inputs_right.append(f"ct:{right['content_type']}")
     topic_score = jaccard(topic_inputs_left, topic_inputs_right)
-    return (0.5 * word_score) + (0.3 * char_score) + (0.2 * topic_score)
+    vector_score = cosine_similarity(term_counter(left), term_counter(right))
+    legacy_score = (0.5 * word_score) + (0.3 * char_score) + (0.2 * topic_score)
+    return max(legacy_score, (0.75 * vector_score) + (0.25 * legacy_score))
 
 
 class UnionFind:
@@ -165,10 +257,14 @@ class UnionFind:
 def build_clusters(posts: List[dict], features: List[dict], threshold: float) -> Tuple[Dict[int, List[int]], Dict[Tuple[int, int], float]]:
     uf = UnionFind(len(posts))
     pair_scores: Dict[Tuple[int, int], float] = {}
+    weighted_vectors = build_weighted_term_vectors(features)
 
     for left_idx in range(len(posts)):
         for right_idx in range(left_idx + 1, len(posts)):
-            score = semantic_similarity(features[left_idx], features[right_idx])
+            score = max(
+                semantic_similarity(features[left_idx], features[right_idx]),
+                cosine_similarity(weighted_vectors[left_idx], weighted_vectors[right_idx]),
+            )
             pair_scores[(left_idx, right_idx)] = score
             if score >= threshold:
                 uf.union(left_idx, right_idx)
@@ -182,6 +278,7 @@ def build_clusters(posts: List[dict], features: List[dict], threshold: float) ->
 
 def best_cluster_label(cluster_posts: List[dict], cluster_features: List[dict], cluster_id: int) -> str:
     topic_counts = Counter()
+    normalized_topic_counts = Counter()
     word_counts = Counter()
 
     for post, features in zip(cluster_posts, cluster_features):
@@ -189,11 +286,17 @@ def best_cluster_label(cluster_posts: List[dict], cluster_features: List[dict], 
             topic = str(topic).strip().lower()
             if topic:
                 topic_counts[topic] += 3
+            for term in extract_topic_terms(topic):
+                if term not in GENERIC_TOPIC_TERMS:
+                    normalized_topic_counts[term] += 3
         for token in features["words"]:
             if len(token) < 3:
                 continue
             word_counts[token] += 1
 
+    if normalized_topic_counts:
+        top_terms = [token for token, _ in normalized_topic_counts.most_common(2)]
+        return " / ".join(top_terms)
     if topic_counts:
         top_topics = [token for token, _ in topic_counts.most_common(2)]
         return " / ".join(top_topics)
