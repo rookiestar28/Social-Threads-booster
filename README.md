@@ -19,7 +19,9 @@ The core idea is simple: every post should improve the next decision.
 - [Recommended Flow](#recommended-flow)
 - [Installation](#installation)
 - [Requirements](#requirements)
+- [Repository Layout](#repository-layout)
 - [Testing](#testing)
+- [What This Project Is Not](#what-this-project-is-not)
 - [License](#license)
 
 ---
@@ -302,6 +304,29 @@ Place the repository in the plugin or skill directory used by your agent runtime
 
 ---
 
+## Repository Layout
+
+```text
+Social-Booster/
+|- SKILL.md
+|- README.md
+|- skills/
+|  |- setup/
+|  |- refresh/
+|  |- analyze/
+|  |- draft/
+|  |- predict/
+|  |- review/
+|  |- topics/
+|  |- voice/
+|- knowledge/
+|- scripts/
+|- examples/
+|- tests/
+```
+
+---
+
 ## Testing
 
 Run the full local validation gate:
@@ -317,6 +342,21 @@ python -m unittest discover -s tests -p "test_*.py"
 ```
 
 The maintained validation gate covers internal guardrails, Python regression tests, and fixture-based CLI E2E workflows. If no `.pre-commit-config.yaml` exists, pre-commit lanes are reported as skipped by the validation runner.
+
+---
+
+## What This Project Is Not
+
+Social-Booster is not:
+
+- a hosted SaaS product
+- a browser frontend
+- a scheduler
+- a scraping-first platform tool
+- a viral-post guarantee system
+- a replacement for creator judgment
+
+It is a local, data-centered skill and scripting toolkit for making better social content decisions across evolving multi-platform workflows.
 
 ---
 
