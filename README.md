@@ -1,15 +1,8 @@
 # Social-Booster
 
-Social-Booster is an AI-native operating system for social media creators who want to make better posting decisions from their own historical performance data.
+Social-Booster is a local, AI-native workflow toolkit for creators who want better posting decisions from their own historical performance data.
 
-It is not a generic post generator and it does not promise viral outcomes. The repository provides a structured skill workflow and supporting Python tools for turning a creator's platform history into a repeatable content process:
-
-- import and normalize historical posts
-- generate a style guide and concept library
-- analyze drafts before publishing
-- recommend topics with demand and freshness signals
-- estimate likely performance ranges
-- review actual outcomes and preserve learning in the tracker
+It is not a generic post generator and it does not promise viral outcomes. It combines agent skills with deterministic Python scripts so a creator can import history, understand patterns, draft more deliberately, estimate performance, and review actual results.
 
 The core idea is simple: every post should improve the next decision.
 
@@ -17,184 +10,85 @@ The core idea is simple: every post should improve the next decision.
 
 ## Table of Contents
 
-- [Why This Repository Exists](#why-this-repository-exists)
-- [Core Strengths](#core-strengths)
-- [How It Works](#how-it-works)
+- [What It Does](#what-it-does)
 - [Main Workflows](#main-workflows)
-- [Current Capabilities](#current-capabilities)
+- [Multi-Platform Support](#multi-platform-support)
+- [Recent Improvements](#recent-improvements)
 - [Generated Files](#generated-files)
 - [Script Reference](#script-reference)
-- [Recommended Operating Flow](#recommended-operating-flow)
+- [Recommended Flow](#recommended-flow)
 - [Installation](#installation)
 - [Requirements](#requirements)
-- [Repository Layout](#repository-layout)
 - [Testing](#testing)
-- [What This Project Is Not](#what-this-project-is-not)
 - [License](#license)
 
 ---
 
-## Why This Repository Exists
+## What It Does
 
-Most creator tools optimize for speed. They help produce more text, but they rarely answer the harder operational questions:
+Social-Booster helps answer operational creator questions:
 
 - Which topic is worth posting now?
 - Is this angle already stale for the account?
 - Does this draft fit the creator's historical voice?
 - What is the main distribution risk before publishing?
-- Did the actual result confirm or weaken the original assumption?
+- What performance range is realistic?
+- Did the real result confirm or weaken the original assumption?
 
-Social-Booster is built for those decisions. It treats the creator's history as the primary source of truth, then combines structured data, agent workflows, and deterministic scripts into a closed feedback loop.
+The repository currently provides:
 
----
-
-## Core Strengths
-
-### Data-backed creator workflow
-
-The system is centered on `threads_daily_tracker.json`, a canonical local tracker that stores posts, metrics, comments, snapshots, prediction records, review notes, algorithm signals, and psychology signals.
-
-Tracker writes are guarded by schema validation and atomic persistence helpers so malformed or partial tracker JSON is rejected before it replaces user data.
-
-### Modular skill architecture
-
-Each workflow is isolated as a skill module:
-
-- `/setup` for initialization and artifact generation
-- `/topics` for topic recommendation
-- `/draft` for new post drafting
-- `/analyze` for pre-publish diagnosis
-- `/predict` for performance range estimation
-- `/review` for post-publish learning
-- `/refresh` for tracker updates
-- `/voice` for brand voice profiling
-
-This separation keeps the system inspectable, extensible, and easier to adapt to different creator workflows.
-
-### Deterministic data pipeline
-
-The repository includes Python scripts for repeatable data operations:
-
-- importing Meta exports
-- fetching Threads API data
-- migrating older tracker formats
-- refreshing metrics snapshots
-- generating setup artifacts
-- rendering human-readable companion files
-- annotating topic freshness and fatigue
-- logging freshness and refresh health
-- validating platform policy and local account configuration
-- validating prediction and review helper data shapes
-
-The agent handles judgment-heavy work. The scripts handle repeatable file and tracker operations.
-
-### Closed-loop learning
-
-The `/predict` and `/review` flow allows the system to compare expectations against actual performance. This makes the tracker more useful over time instead of leaving each post as an isolated event.
-
-Prediction snapshots can be validated, rendered as range tables, stored safely, preserved in history, and later compared against actual metrics with deterministic review helpers.
-
-### Configurable interaction style
-
-Runtime preferences can be stored in an optional local `social_booster_config.json` file. Workflows can run in fast mode, discussion mode, or auto mode without duplicating preference semantics across `/draft`, `/analyze`, and `/review`.
-
-### Honest operating boundaries
-
-Social-Booster is designed to improve decision quality, not guarantee reach. It surfaces confidence levels, missing data, stale metrics, skipped freshness checks, and weak historical baselines instead of hiding uncertainty.
-
-Audit logs are sanitized before write so token-like fields, sensitive query values, bearer tokens, and overly long private text do not leak into machine-readable logs.
-
----
-
-## How It Works
-
-```text
-Data sources
-  -> platform APIs, account exports, existing JSON/CSV/Markdown, or browser-assisted profile refresh
-
-Normalization
-  -> threads_daily_tracker.json
-
-Generated knowledge assets
-  -> style_guide.md
-  -> concept_library.md
-  -> brand_voice.md
-  -> posts_by_date.md / posts_by_topic.md / comments.md
-
-Skill workflows
-  -> topics
-  -> draft
-  -> analyze
-  -> predict
-  -> review
-  -> refresh
-
-Feedback loop
-  -> metrics snapshots, prediction comparison, review notes, freshness logs, refresh logs
-```
+- modular agent skills under `skills/`
+- platform-neutral tracker helpers
+- platform adapter contracts and read/normalize adapters
+- local artifact generators for style, concepts, and brand voice
+- prediction and review helper scripts
+- deterministic test and CLI E2E validation
 
 ---
 
 ## Main Workflows
 
-### 1. Setup and import
+### `/setup`
 
-`/setup` initializes the workspace by importing historical social-platform data and generating the files that downstream workflows use.
+Initializes the local workspace from supported inputs, then generates the standard working files:
 
-Supported input paths currently include:
+- tracker JSON
+- `style_guide.md`
+- `concept_library.md`
+- readable companion Markdown files
+- optional `brand_voice.md`
 
-- Threads Developer API
-- Meta account data export
-- existing structured or semi-structured files
-- Chrome-assisted profile refresh through a compatible MCP runtime
-- migration from an older tracker shape
+Threads remains the most mature end-to-end import/refresh path, while platform-neutral tracker migration is available for broader multi-platform data.
 
-Threads is the most mature implemented data path today. The architecture and policy guardrails are being shaped for broader mainstream social-platform support.
+### `/topics`
 
-Primary scripts:
-
-```bash
-THREADS_API_TOKEN="..." python scripts/fetch_threads.py --output threads_daily_tracker.json
-python scripts/parse_export.py --input META_EXPORT_PATH --output threads_daily_tracker.json
-python scripts/migrate_legacy_tracker.py --input OLD_TRACKER.json --output threads_daily_tracker.json --write
-python scripts/run_setup_artifacts.py --tracker threads_daily_tracker.json --output-dir .
-```
-
-For credentialed API workflows, environment variables and token files are preferred over direct CLI secrets.
-
-### 2. Topic recommendation
-
-`/topics` recommends 3 to 5 candidate topics by combining:
+Recommends topics from:
 
 - historical performance
-- comment demand
-- creator reply patterns
+- comments and audience demand
+- semantic freshness and fatigue risk
 - recent topic distribution
-- semantic freshness
-- external saturation checks when search is available
 - concept-library extension opportunities
+- external freshness checks when search is available
 
-The goal is not to chase generic trends. The goal is to find topics that are timely, account-fit, and not already exhausted.
+For platform-neutral trackers, topic mining is routed per platform first so incompatible metric baselines are not silently mixed.
 
-### 3. Draft generation
+### `/draft`
 
-`/draft` creates a starting draft from a selected topic. It uses:
+Creates a starting draft from a selected topic using:
 
 - `brand_voice.md`
 - `style_guide.md`
 - historical posts
 - `concept_library.md`
 - freshness checks
-- source verification for factual claims
 - optional runtime preferences from `social_booster_config.json`
 
-Drafting is intentionally treated as a starting point. The user is expected to edit before publishing.
+For non-Threads targets, `/draft` now applies platform routing first, so video-first, media-centric, forum-shaped, professional, and text-native platforms are handled differently.
 
-`brand_voice.md` includes a user-editable `Manual Refinements (user-edited)` section. Those refinements are preserved when the Brand Voice file is regenerated and take priority over generated voice observations.
+### `/analyze`
 
-### 4. Pre-publish analysis
-
-`/analyze` is a diagnostic layer for posts the user has already written. It checks:
+Diagnoses a finished post without rewriting it by default. It checks:
 
 - algorithm red lines
 - suppression risks
@@ -204,161 +98,162 @@ Drafting is intentionally treated as a starting point. The user is expected to e
 - share and comment potential
 - AI-tone traces
 
-By default, `/analyze` does not rewrite the whole post. It gives pointed, local changes so the user stays in control of the final voice.
+For platform-neutral trackers, analysis builds comparable sets within the target platform before using cross-platform context.
 
-### 5. Performance prediction
+### `/predict`
 
-`/predict` estimates conservative, baseline, and optimistic 24-hour ranges using comparable historical posts.
+Estimates conservative, baseline, and optimistic 24-hour performance ranges from comparable historical posts. Prediction snapshots can be stored safely and later compared by `/review`.
 
-It is designed as expectation management, not false precision. The prediction can be stored in the tracker so `/review` can compare it against real outcomes later.
+For platform-neutral trackers, predictions are platform-local first and unavailable metrics are marked unavailable instead of being inferred from another platform.
 
-The helper layer validates prediction snapshot shape, excludes unstable quote-volume prediction by default, renders range tables, creates pending placeholders for unpublished drafts, and prevents silent overwrite of existing prediction snapshots.
+### `/review`
 
-### 6. Post-publish review
+Compares actual results against predictions, records what was validated or weakened, and preserves learning in the tracker without overwriting the original prediction snapshot.
 
-`/review` closes the loop after publishing. It compares actual metrics against prior predictions, updates review state, records validated or weakened assumptions, and checks whether freshness or refresh automation has degraded.
+### `/refresh`
 
-Review helpers render prediction-versus-actual comparison tables, classify actual results as under, inside, or over the predicted band, and update `review_state` without changing the original `prediction_snapshot`.
+Updates metrics and comments where supported. API-backed refresh is preferred; browser-assisted refresh exists as a fallback for compatible local runtimes.
 
-### 7. Refresh and snapshots
+### `/voice`
 
-`/refresh` and `scripts/update_snapshots.py` keep metrics and comments current.
-
-API-backed refresh is preferred for reliability. Chrome-assisted refresh is available as a fallback when the user cannot use the API, but it depends on a compatible logged-in browser runtime.
-
-The Chrome path has a deterministic extraction and merge seam for selector-health checks, metric parsing, snapshot append behavior, comment merging, and expired pending-placeholder cleanup. Unit tests do not require live browser state.
+Builds a reusable brand voice profile with preserved manual refinements, recurring phrase inventory, opener/closer patterns, rhythm markers, register markers, and confidence notes.
 
 ---
 
-## Current Capabilities
+## Multi-Platform Support
 
-### Brand Voice preservation and inventory
+Social-Booster now has a platform-neutral foundation in addition to the original Threads workflow.
 
-`scripts/generate_brand_voice.py` now produces a richer `brand_voice.md` with:
+Implemented platform-neutral pieces:
 
-- preserved `Manual Refinements (user-edited)`
-- recurring signature word and phrase counts
-- opener and closer pattern inventory
-- punctuation and rhythm markers
-- language/register markers
-- argumentation style inventory
-- confidence labels when evidence is thin
+- `scripts/platform_schema.py` for schema-v2 platform-neutral trackers
+- `scripts/platform_adapters.py` for normalized adapter domain objects
+- `scripts/platform_migration.py` and `scripts/migrate_platform_tracker.py` for Threads-to-platform-neutral migration
+- `scripts/capability_registry.py` and `knowledge/platform_api_policy.json` for capability and permission boundaries
+- `scripts/platform_workflow_routing.py` for `/topics`, `/draft`, `/analyze`, and `/predict` routing
 
-### Runtime preferences
+Implemented adapters and normalizers:
 
-`scripts/workflow_preferences.py` validates optional runtime preferences for workflow behavior:
+| Platform | Status |
+| --- | --- |
+| Threads | First-class adapter wrapping the existing Threads path |
+| Instagram | Meta Graph-style read/normalize adapter |
+| Facebook Pages | Meta Graph-style read/normalize adapter |
+| YouTube | Data API and Analytics API split-client adapter |
+| Reddit | Submission/comment normalization without invented reach metrics |
+| Bluesky | AT Protocol post/reply normalization |
+| Mastodon | Instance-aware status/reply normalization |
+| X | Tier-gated adapter with fail-closed operation checks |
+| LinkedIn | Review-gated member/organization adapter |
+| Pinterest | Pin/board/media normalization with optional analytics fields |
+| TikTok | Limited product-specific video normalization boundary |
 
-- `workflows.draft.discussion_mode`
-- `workflows.draft.research_angle_expansion`
-- `workflows.analyze.discussion_mode`
-- `workflows.review.discussion_mode`
+Most adapters are intentionally conservative: they normalize deterministic payloads and fail closed when credentials, product access, API tier, or review approval are unavailable. Publishing and write operations are not broadly implemented unless the platform capability and access model are explicit.
 
-Local preference files are intentionally ignored by Git.
+---
 
-### Tracker safety
+## Recent Improvements
 
-Tracker persistence now includes:
+Recent completed work includes:
 
-- schema validation before save
-- actionable validation errors with field paths
-- same-directory temp-file writes
-- atomic replacement through `os.replace`
-- shared metric snapshot and performance-window helpers
-
-### Legacy migration
-
-Legacy tracker migration is available through `scripts/migrate_legacy_tracker.py`. It supports:
-
-- dry-run JSON summaries
-- write mode with rollback backup
-- migration from pre-v1 tracker shapes
-- optional post archive and comment archive enrichment
-- optional companion Markdown regeneration
-
-### Platform and credential boundaries
-
-The repository includes public knowledge and validation helpers for future multi-platform work:
-
-- platform API policy matrix
-- platform adapter review gate
-- safe account-context loading
-- local-only credential-source references
-
-These helpers define guardrails without turning this repository into a hosted platform or storing credentials in tracked files.
-
-### Audit and review support
-
-Freshness and refresh logs are bounded JSONL logs. Helper scripts can:
-
-- append freshness and refresh audit entries
-- sanitize sensitive log content
-- summarize recent log health
-- record bounded draft decision tags
-- compare prediction ranges against actual metrics
+- semantic topic freshness improvements for mixed English/CJK topic extraction and clustering
+- platform-neutral tracker schema, fixture corpus, migration, and adapter contract
+- first-class adapters for Threads, Meta-family platforms, YouTube, Reddit, Bluesky, Mastodon, X, LinkedIn, Pinterest, and TikTok
+- credential-source helpers that avoid storing or printing secrets
+- capability review gates for platform-specific API access
+- cross-platform routing for topic, draft, analysis, and prediction workflows
+- richer brand voice generation with preserved manual refinements and countable inventory
+- prediction helper validation, range rendering, placeholder persistence, and review comparison helpers
+- sanitized freshness and refresh audit logs
+- repo validation entrypoint and deterministic CLI E2E runner
 
 ---
 
 ## Generated Files
 
-After setup, the working directory usually contains:
+Common local outputs:
 
 | File | Purpose |
 | --- | --- |
-| `threads_daily_tracker.json` | Canonical machine-readable tracker |
+| `threads_daily_tracker.json` | Legacy/current Threads-shaped tracker used by the mature Threads workflow |
+| `social_posts_tracker.json` | Platform-neutral tracker output for multi-platform workflows |
 | `style_guide.md` | Quantitative writing and performance patterns |
-| `concept_library.md` | Concepts, analogies, repeated clusters, and underdeveloped ideas |
-| `brand_voice.md` | Qualitative voice profile used by `/draft` |
+| `concept_library.md` | Concepts, analogies, recurring clusters, and underdeveloped ideas |
+| `brand_voice.md` | Qualitative voice profile used mainly by `/draft` |
 | `posts_by_date.md` | Human-readable chronological post archive |
 | `posts_by_topic.md` | Human-readable topic index |
 | `comments.md` | Human-readable comment log |
-| `threads_freshness.log` | JSONL audit log for freshness checks |
-| `threads_refresh.log` | JSONL audit log for refresh runs |
-| `social_booster_config.json` | Optional local runtime preferences; ignored by Git |
-| `platform_accounts.local.json` | Optional local account-context file; ignored by Git |
+| `threads_freshness.log` | JSONL freshness-check audit log |
+| `threads_refresh.log` | JSONL refresh audit log |
+| `social_booster_config.json` | Optional local runtime preferences, ignored by Git |
+| `platform_accounts.local.json` | Optional local account context file, ignored by Git |
+
+Do not store credentials in tracker files, generated Markdown, logs, or config files.
 
 ---
 
 ## Script Reference
 
+Core setup and tracker scripts:
+
 | Script | Function |
 | --- | --- |
-| `scripts/account_context.py` | Load safe platform/account context without storing inline secrets |
-| `scripts/check_internal_guardrails.py` | Verify local-only protected files remain ignored and untracked |
-| `scripts/chrome_refresh.py` | Testable Chrome refresh extraction and tracker-merge seam |
-| `scripts/credential_sources.py` | Resolve credentials from env vars, files, or discouraged direct CLI values |
-| `scripts/fetch_threads.py` | Fetch posts, metrics, and replies from the Threads API |
-| `scripts/legacy_migration.py` | Core legacy tracker migration and Markdown enrichment helpers |
-| `scripts/log_redaction.py` | Sanitize machine-readable audit log entries before write |
-| `scripts/migrate_legacy_tracker.py` | Dry-run or write legacy tracker migration with rollback backup |
+| `scripts/fetch_threads.py` | Fetch Threads posts, metrics, and replies |
 | `scripts/parse_export.py` | Convert a Meta account export into tracker format |
-| `scripts/prediction_helpers.py` | Validate, render, and persist prediction snapshots |
+| `scripts/migrate_legacy_tracker.py` | Migrate older tracker shapes with rollback backup |
+| `scripts/migrate_platform_tracker.py` | Convert a Threads tracker to schema-v2 platform-neutral format |
+| `scripts/tracker_utils.py` | Shared tracker validation, atomic save, snapshots, and backups |
 | `scripts/update_snapshots.py` | Refresh metrics, append snapshots, and update checkpoint windows |
-| `scripts/generate_style_guide.py` | Generate `style_guide.md` from the tracker |
-| `scripts/generate_concept_library.py` | Generate `concept_library.md` from the tracker |
-| `scripts/generate_brand_voice.py` | Generate `brand_voice.md` from the tracker |
+
+Artifact and workflow helper scripts:
+
+| Script | Function |
+| --- | --- |
 | `scripts/run_setup_artifacts.py` | Generate the standard setup artifact bundle |
+| `scripts/generate_style_guide.py` | Generate `style_guide.md` |
+| `scripts/generate_concept_library.py` | Generate `concept_library.md` |
+| `scripts/generate_brand_voice.py` | Generate `brand_voice.md` |
 | `scripts/render_companions.py` | Render readable post, topic, and comment Markdown files |
-| `scripts/review_helpers.py` | Build prediction-vs-actual review comparison tables and review-state updates |
-| `scripts/review_log_health.py` | Parse and summarize refresh/freshness log health |
-| `scripts/update_topic_freshness.py` | Add semantic cluster and fatigue signals to tracker posts |
+| `scripts/update_topic_freshness.py` | Add semantic freshness and fatigue signals |
+| `scripts/prediction_helpers.py` | Validate, render, and persist prediction snapshots |
+| `scripts/review_helpers.py` | Build prediction-vs-actual review summaries |
 | `scripts/log_freshness_audit.py` | Append freshness-check audit entries |
 | `scripts/summarize_log_health.py` | Summarize refresh and freshness log health |
-| `scripts/tracker_utils.py` | Shared tracker schema, validation, atomic save, snapshots, and backups |
-| `scripts/validate_platform_review.py` | Validate platform adapter review evidence against policy requirements |
+
+Platform and safety scripts:
+
+| Script | Function |
+| --- | --- |
+| `scripts/platform_schema.py` | Build and validate platform-neutral tracker objects |
+| `scripts/platform_adapters.py` | Shared normalized adapter contract and domain objects |
+| `scripts/platform_workflow_routing.py` | Build platform-aware routing plans for core workflows |
+| `scripts/threads_adapter.py` | Threads platform adapter |
+| `scripts/meta_adapters.py` | Instagram and Facebook Pages adapters |
+| `scripts/youtube_adapter.py` | YouTube adapter |
+| `scripts/reddit_adapter.py` | Reddit adapter |
+| `scripts/open_network_adapters.py` | Bluesky and Mastodon adapters |
+| `scripts/x_adapter.py` | X adapter |
+| `scripts/linkedin_adapter.py` | LinkedIn adapter |
+| `scripts/pinterest_adapter.py` | Pinterest adapter |
+| `scripts/tiktok_adapter.py` | TikTok adapter |
+| `scripts/account_context.py` | Load safe platform/account context |
+| `scripts/credential_sources.py` | Resolve credentials from env vars or token files |
+| `scripts/validate_platform_review.py` | Validate platform adapter review evidence |
 | `scripts/workflow_preferences.py` | Validate optional workflow runtime preferences |
+| `scripts/validate_repo.py` | Run the repository validation gate |
 
 ---
 
-## Recommended Operating Flow
+## Recommended Flow
 
-### First-time setup
+First-time setup:
 
 ```text
 /setup
 /voice
 ```
 
-### Before posting
+Before posting:
 
 ```text
 /topics
@@ -367,7 +262,7 @@ After setup, the working directory usually contains:
 /predict
 ```
 
-### After posting
+After posting:
 
 ```text
 /refresh
@@ -378,13 +273,13 @@ After setup, the working directory usually contains:
 
 ## Installation
 
-### Claude Code plugin install
+Claude Code plugin install:
 
 ```bash
 claude install-plugin https://github.com/rookiestar28/Social-Booster
 ```
 
-### Manual install
+Manual install:
 
 ```bash
 git clone https://github.com/rookiestar28/Social-Booster.git
@@ -398,73 +293,30 @@ Place the repository in the plugin or skill directory used by your agent runtime
 
 ## Requirements
 
-- Python 3.9+
-- `requests` for the Threads API path
+- Python 3.10+
+- `requests` for API-backed paths
 - a compatible AI agent runtime for the skill workflows
-- optional Threads API access token for reliable refresh
-- optional Chrome MCP-compatible browser runtime for browser-assisted refresh
-
----
-
-## Repository Layout
-
-```text
-Social-Booster/
-|- SKILL.md
-|- README.md
-|- skills/
-|  |- setup/
-|  |- refresh/
-|  |- analyze/
-|  |- draft/
-|  |- predict/
-|  |- review/
-|  |- topics/
-|  |- voice/
-|- knowledge/
-|  |- _shared/
-|  |- account-credential-boundary.md
-|  |- algorithm.md
-|  |- ai-detection.md
-|  |- chrome-selectors.md
-|  |- data-confidence.md
-|  |- platform_api_policy.json
-|  |- platform-api-policy.md
-|  |- platform-adapter-review-gate.md
-|  |- psychology.md
-|  |- user-fact-source-of-truth.md
-|- scripts/
-|- examples/
-|- tests/
-```
+- optional Threads API token for the mature refresh path
+- optional platform credentials for adapter smoke testing
+- optional compatible browser runtime for browser-assisted refresh
 
 ---
 
 ## Testing
 
-Run the Python regression suite:
+Run the full local validation gate:
+
+```bash
+python scripts/validate_repo.py
+```
+
+Or run only Python regression tests:
 
 ```bash
 python -m unittest discover -s tests -p "test_*.py"
 ```
 
-The tests cover tracker scaffolding, export parsing, setup artifact generation, style guide generation, concept library generation, brand voice generation, and audit-log health helpers.
-
-The current suite also covers tracker validation and atomic persistence, legacy migration, Chrome refresh merge helpers, workflow preferences, account-context boundaries, platform review gates, prediction persistence helpers, and review comparison helpers.
-
----
-
-## What This Project Is Not
-
-Social-Booster is not:
-
-- a hosted SaaS product
-- a browser frontend
-- a scheduler by itself
-- a viral-post guarantee system
-- a replacement for creator judgment
-
-It is a local, data-centered skill and scripting toolkit for making better social content decisions across evolving multi-platform workflows.
+The maintained validation gate covers internal guardrails, Python regression tests, and fixture-based CLI E2E workflows. If no `.pre-commit-config.yaml` exists, pre-commit lanes are reported as skipped by the validation runner.
 
 ---
 
