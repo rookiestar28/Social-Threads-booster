@@ -26,12 +26,25 @@ Skill-specific addendum: always give ranges, never false precision. Prediction i
 
 Use the strongest available data path:
 
+- `social_posts_tracker.json`
 - `threads_daily_tracker.json`
 - `style_guide.md` if available
 
 If the tracker exists but the style guide does not, derive temporary features from the tracker and continue.
 
 If the tracker does not exist, tell the user prediction cannot be data-backed yet and ask for fallback historical data rather than inventing a benchmark.
+
+### Platform Routing Gate
+
+If a schema-v2 platform-neutral tracker is available (`social_posts_tracker.json` or any tracker with `tracker_type: platform-neutral`), route before prediction:
+
+1. Determine the target platform from the user's request, post URL/context, or `social_booster_config.json`; if ambiguous, ask before persisting any prediction.
+2. Use `scripts/platform_workflow_routing.py` conceptually for `workflow="predict"` to identify selected platforms, supported metrics, unavailable metrics, and weak comparison warnings.
+3. Build prediction ranges from platform-local comparable posts first.
+4. Do not produce a metric range for a field that is unavailable on the target platform route. Mark it unavailable instead of estimating it from another platform.
+5. For mixed-platform datasets, show separate per-platform prediction context unless the compared metric exists on every selected platform.
+
+For legacy `threads_daily_tracker.json`, keep the existing Threads-only prediction flow.
 
 ---
 

@@ -40,6 +40,7 @@ Search the working directory for:
 
 - `style_guide.md`
 - `brand_voice.md`
+- `social_posts_tracker.json`
 - `threads_daily_tracker.json`
 - `concept_library.md`
 - optional `social_booster_config.json`
@@ -63,6 +64,21 @@ Behavior:
 - `auto`: use fast mode by default, but switch to discussion when the topic is ambiguous, freshness is yellow/red, personal facts conflict, or source confidence is weak.
 
 Only persist preference changes when the user explicitly asks to update preferences. Never store credentials, cookies, tokens, private URLs, or private account details in this config.
+
+### Platform Routing Gate
+
+If a schema-v2 platform-neutral tracker is available (`social_posts_tracker.json` or any tracker with `tracker_type: platform-neutral`), route before drafting:
+
+1. Determine the target platform from the user's request or `social_booster_config.json`; if no target is clear, ask for the platform before composing.
+2. Use `scripts/platform_workflow_routing.py` conceptually for `workflow="draft"` to identify platform content constraints, supported metrics, missing metrics, and weak comparison warnings.
+3. Apply platform-specific format constraints before writing:
+   - video-first platforms need video premise, visual sequence, and spoken/onscreen context.
+   - media-centric platforms need visual/link context and should not be treated as plain text feeds.
+   - forum-shaped platforms need submission/comment dynamics.
+   - professional platforms need member/organization context and professional norms.
+4. Do not reuse Threads-native drafting assumptions for non-Threads targets unless the route says the platform is text-native.
+
+For legacy `threads_daily_tracker.json`, keep the existing Threads-only drafting flow.
 
 ---
 

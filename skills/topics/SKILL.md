@@ -28,11 +28,23 @@ Comment mining matters because it reveals what the audience genuinely cares abou
 
 Search the working directory for:
 
+- `social_posts_tracker.json`
 - `threads_daily_tracker.json`
 - `style_guide.md`
 - `concept_library.md`
 
 If the tracker is missing, tell the user to run `/setup` first.
+
+### Platform Routing Gate
+
+If a schema-v2 platform-neutral tracker is available (`social_posts_tracker.json` or any tracker with `tracker_type: platform-neutral`), route before mining topics:
+
+1. Determine the target platform from the user's request or `social_booster_config.json`; if none is specified, keep platform routes separate.
+2. Use `scripts/platform_workflow_routing.py` conceptually for `workflow="topics"` to identify selected platforms, content formats, supported metrics, missing metrics, and weak comparison warnings.
+3. Mine comment demand, semantic freshness, and historical performance within each selected platform first.
+4. Do not average or rank topics across platforms unless the compared metrics exist on every selected platform. If they do not, show per-platform recommendations instead.
+
+For legacy `threads_daily_tracker.json`, keep the existing Threads-only flow.
 
 ---
 

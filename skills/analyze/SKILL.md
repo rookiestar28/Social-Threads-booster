@@ -50,6 +50,7 @@ Use the strongest available data path below. Do not fail just because full setup
 
 Search the user's working directory for:
 
+- `social_posts_tracker.json`
 - `threads_daily_tracker.json`
 - `style_guide.md`
 - `concept_library.md`
@@ -57,6 +58,17 @@ Search the user's working directory for:
 - optional `social_booster_config.json`
 
 Use all available files. If `brand_voice.md` exists, use it **for observation only** — to notice where the submitted post drifts from the user's own historical voice. Treat `## Manual Refinements (user-edited)` as higher priority than generated Brand Voice sections when identifying drift. Never use Brand Voice to rewrite or pull the submission toward a template. The heavy composition application of `brand_voice.md` belongs to `/draft`, not here.
+
+#### Platform Routing Gate
+
+If a schema-v2 platform-neutral tracker is available (`social_posts_tracker.json` or any tracker with `tracker_type: platform-neutral`), route before analysis:
+
+1. Determine the target platform from the submitted post context, user request, or `social_booster_config.json`; if ambiguous, state the ambiguity and analyze platform-local signals only where defensible.
+2. Use `scripts/platform_workflow_routing.py` conceptually for `workflow="analyze"` to identify selected platforms, content formats, supported metrics, missing metrics, and weak comparison warnings.
+3. Build nearest-neighbor, top-quartile, recent repetition, and semantic-cluster sets within the target platform first.
+4. Do not import red-line, metric, or style conclusions from another platform unless the output explicitly marks them as cross-platform directional context.
+
+For legacy `threads_daily_tracker.json`, keep the existing Threads-only analysis flow.
 
 If `social_booster_config.json` exists, read `workflows.analyze.discussion_mode` using the same values validated by `scripts/workflow_preferences.py`:
 
